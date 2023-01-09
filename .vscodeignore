@@ -1,0 +1,12 @@
+.vscode
+.gitignore
+client/out/*.map
+client/src/
+tsconfig.json
+tslint.json
+package.json
+package-lock.json
+extension_env
+.pytest_cache
+*.vsix
+*.log
