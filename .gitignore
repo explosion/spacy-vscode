@@ -1,0 +1,10 @@
+out
+node_modules
+client/server
+.vscode-test
+.vscode/settings.json
+working_env
+*.vsix
+*.log
+__pycache__
+test.py
