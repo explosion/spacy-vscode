@@ -30,3 +30,12 @@ Use `F5` or the Debug menu inside the `./extension` folder to run both the clien
 > The launch settings can be adjusted in `./extension/.vscode/launch.json`
 
 Most of the code and logic will go into in the [`server.py` file](./extension/server/server.py).
+
+### Building the extension
+TODO
+
+### Debugging
+TODO
+
+### Writing unit tests
+TODO
