@@ -13,18 +13,37 @@ from pygls.lsp.types import (
 from typing import Optional
 import spacy
 from .feature_hover import hover
-from .language_server import SpaCyLanguageServer
+from .feature_validation import validate_on_open
+from .spacy_server import SpacyLanguageServer
 
 
-spacy_server = SpaCyLanguageServer("pygls-spacy-server", "v0.1")
+spacy_server = SpacyLanguageServer("pygls-spacy-server", "v0.1")
 
 
 @spacy_server.feature(HOVER)
 def hover_feature(
-    server: SpaCyLanguageServer, params: TextDocumentPositionParams
+    server: SpacyLanguageServer, params: TextDocumentPositionParams
 ) -> Optional[Hover]:
     """Implement all Hover functionality"""
     return hover(server, params)
+
+
+@spacy_server.feature(TEXT_DOCUMENT_DID_CLOSE)
+def did_close(server: SpacyLanguageServer, params: DidCloseTextDocumentParams):
+    """Text document did close notification."""
+    server.show_message("Config File Did Close")
+
+
+@spacy_server.feature(TEXT_DOCUMENT_DID_OPEN)
+async def did_open(server: SpacyLanguageServer, params: DidOpenTextDocumentParams):
+    """Text document did open notification."""
+    config = validate_on_open(params=params)
+    if config:
+        server.show_message("Config File Validation Successful")
+        spacy_server.config = config
+    else:
+        server.show_message("Config File Validation Unsuccessful")
+        spacy_server.config = None
 
 
 # Temporary for testing
@@ -33,17 +52,3 @@ def spaCy_test(ls, *args):
     nlp = spacy.blank("en")
     doc = nlp("This is great!")
     ls.show_message(f"spaCy loaded! {doc.text}")
-
-
-# Temporary for testing
-@spacy_server.feature(TEXT_DOCUMENT_DID_CLOSE)
-def did_close(server: SpaCyLanguageServer, params: DidCloseTextDocumentParams):
-    """Text document did close notification."""
-    server.show_message("Config File Did Close")
-
-
-# Temporary for testing
-@spacy_server.feature(TEXT_DOCUMENT_DID_OPEN)
-async def did_open(ls, params: DidOpenTextDocumentParams):
-    """Text document did open notification."""
-    ls.show_message("Config File Did Open")

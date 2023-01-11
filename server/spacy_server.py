@@ -1,7 +1,9 @@
 from pygls.server import LanguageServer
 
+from thinc.api import Config
 
-class SpaCyLanguageServer(LanguageServer):
+
+class SpacyLanguageServer(LanguageServer):
     """
     The language server is responsible for receiving and sending messages over the Language Server Protocol
     which is based on the Json RPC protocol.
@@ -12,3 +14,4 @@ class SpaCyLanguageServer(LanguageServer):
 
     def __init__(self, *args):
         super().__init__(*args)
+        self.config: Config = None
