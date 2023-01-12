@@ -24,7 +24,7 @@ spacy_server = SpacyLanguageServer("pygls-spacy-server", "v0.1")
 def hover_feature(
     server: SpacyLanguageServer, params: TextDocumentPositionParams
 ) -> Optional[Hover]:
-    """Implement all Hover functionality"""
+    """Implement Hover functionality"""
     return hover(server, params)
 
 
