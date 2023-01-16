@@ -1,9 +1,7 @@
-from pygls.lsp.methods import (
+from lsprotocol.types import (
     TEXT_DOCUMENT_DID_CLOSE,
     TEXT_DOCUMENT_DID_OPEN,
-    HOVER,
-)
-from pygls.lsp.types import (
+    TEXT_DOCUMENT_HOVER,
     DidCloseTextDocumentParams,
     DidOpenTextDocumentParams,
     Hover,
@@ -20,7 +18,7 @@ from .spacy_server import SpacyLanguageServer
 spacy_server = SpacyLanguageServer("pygls-spacy-server", "v0.1")
 
 
-@spacy_server.feature(HOVER)
+@spacy_server.feature(TEXT_DOCUMENT_HOVER)
 def hover_feature(
     server: SpacyLanguageServer, params: TextDocumentPositionParams
 ) -> Optional[Hover]:
