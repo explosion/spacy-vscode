@@ -1,14 +1,12 @@
 """Script containing all logic for hover functionality"""
 
-from pygls.lsp.types import (
+from lsprotocol.types import (
     Position,
     Range,
     Hover,
     TextDocumentPositionParams,
     MarkupContent,
     MarkupKind,
-)
-from pygls.lsp.types.basic_structures import (
     Range,
 )
 

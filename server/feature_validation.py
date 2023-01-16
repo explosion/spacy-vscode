@@ -1,5 +1,5 @@
 """Script containing all logic for validation functionality"""
-from pygls.lsp.types import DidOpenTextDocumentParams
+from lsprotocol.types import DidOpenTextDocumentParams
 
 from thinc.api import Config
 from typing import Optional
