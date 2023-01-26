@@ -48,18 +48,29 @@ For every feature, there will be a dedicated script (e.g. `feature_hover.py`) wh
 - `spaCy Extension: Return Python Interpreter` - Returns the Python Interpreter on which the spaCy Extension server is running.
 - `spaCy Extension: Restart Server` - Restarts the Language Server and uses the current selected Python Interpreter (or specified in `defaultPythonInterpreter`)
 
+#### Python Environment Management
+The spaCy Extension is capable to detect the current selected Python Interpreter in the current workspace and uses it to start the Language Server on. It is also capable to detect an Interpreter change and can restart the server accordingly. Before the Language Server is started, the extension first verifies whether the current selected Interpreter has all modules installed (`pygls`,`spacy`) and is compatible. If the user starts the server on an compatible environment and changes to an incompatible environment, the extension won't restart the server and stays on the previous environment.
+
+If a `defaultPythonInterpreter` was set, the extension will only use this environment and is not affected by the current selected Python Interpeter or changes.
+
 ### Building the extension
-TODO
 
-npm install -g @vscode/vsce
+To build and publish the extension we can use [Visual Studio Code Extension](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#vsce) which can be installed like this `npm install -g @vscode/vsce`.
 
-main file .client/extension.ts
+To package the extension use `vsce package`
+It will create an installable `.vsix` file which can be used to install the extension locally.
 
-(Building the extension will probably be the most biggest challenge because we need to handle multiple things regarding python (e.g. python environment handling per device, etc.))
+To publish the extension use `vsce publish` (WIP)
 
 ### Logging / Debugging
-TODO
-(There are some logs that are being written to during debug runtime but I need to further explore this)
+
+#### Client Server (TypeScript)
+To provide more information of the current state of the Client Server we use `console.info` and `console.warn` to notify the user. It should start with `spaCy Extension:` to make clear that it's related to the spaCy Extension.
+
+#### Language Server (Python)
+
+To provide more information of the current state of the Language Server we use `logging.debug` which writes logs to `pygls.log`.
+
 
 ### Writing unit tests
 TODO
