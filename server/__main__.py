@@ -1,5 +1,6 @@
 import argparse
 import logging
+from .server import spacy_server
 
 logging.basicConfig(filename="pygls.log", level=logging.DEBUG, filemode="w")
 
@@ -28,8 +29,6 @@ def main():
     parser = argparse.ArgumentParser()
     add_arguments(parser)
     args = parser.parse_args()
-
-    from .server import spacy_server
 
     if args.tcp:
         spacy_server.start_tcp(args.host, args.port)
