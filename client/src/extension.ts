@@ -140,12 +140,17 @@ function returnCurrentPythonEnvironment() {
 }
 
 async function restartServer() {
+    console.info("spaCy Extension: Restarting Server")
     if (client) {
-        console.info("spaCy Extension: Restarting Server")
         client.stop().then(async (success) => {
             client = await startProduction();
             await client.start()
+            vscode.window.showInformationMessage("spaCy Extension: Server Restarted")
         })
+    } else {
+        client = await startProduction();
+        await client.start()
+        vscode.window.showInformationMessage("spaCy Extension: Server Restarted")
     }
 }
 
@@ -198,14 +203,12 @@ export async function activate(context: ExtensionContext) {
 
     if (context.extensionMode === ExtensionMode.Development) {
         // Development - Run the server manually
-        // client = startLangServerTCP(2087)
+        client = startLangServerTCP(2087)
     } else {
         // Production - Client is going to run the server (for use within `.vsix` package)
-        //client = startProduction()
+        client = await startProduction()
     }
 
-    // TMP
-    client = await startProduction()
     if (client) {
         await client.start()
     }

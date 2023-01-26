@@ -4,10 +4,10 @@
   "author": "Explosion AI",
   "repository": "https://github.com/explosion/spacy-vscode",
   "license": "MIT",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "Explosion AI",
   "engines": {
-    "vscode": "^1.62.0"
+    "vscode": "^1.74.0"
   },
   "categories": [
     "Other"
