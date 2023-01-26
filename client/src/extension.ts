@@ -21,27 +21,33 @@
 import * as net from "net";
 import * as path from "path";
 import { ExtensionContext, ExtensionMode, workspace } from "vscode";
+import * as vscode from 'vscode';
+import {
+    onDidChangePythonInterpreter,
+    getPythonExtensionAPI,
+    onDidChangePythonInterpreterEvent
+} from './common/python';
 import {
     LanguageClient,
     LanguageClientOptions,
     ServerOptions,
 } from "vscode-languageclient/node";
+import { exec } from 'child_process'
 
 let client: LanguageClient;
+const importPython = "'import pygls; import spacy'"
 
-function getClientOptions(): LanguageClientOptions {
-    return {
-        // Register the server for plain text documents
-        documentSelector: [
-            { scheme: "file", pattern:"**/*.cfg" },
-            { scheme: "untitled", pattern:"**/*.cfg" },
-        ],
-        outputChannelName: "[pygls] JsonLanguageServer",
-        synchronize: {
-            // Notify the server about file changes to '.clientrc files contain in the workspace
-            fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
-        },
-    };
+const clientOptions: LanguageClientOptions = {
+    // Register the server for plain text documents
+    documentSelector: [
+        { scheme: "file", pattern: "**/*.cfg" },
+        { scheme: "untitled", pattern: "**/*.cfg" },
+    ],
+    outputChannelName: "[pygls] spaCy-Language-Server",
+    synchronize: {
+        // Notify the server about file changes to '.clientrc files contain in the workspace
+        fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
+    }
 }
 
 function startLangServerTCP(addr: number): LanguageClient {
@@ -60,7 +66,7 @@ function startLangServerTCP(addr: number): LanguageClient {
     return new LanguageClient(
         `tcp lang server (port ${addr})`,
         serverOptions,
-        getClientOptions()
+        clientOptions
     );
 }
 
@@ -75,30 +81,85 @@ function startLangServer(
         options: { cwd },
     };
 
-    return new LanguageClient(command, serverOptions, getClientOptions());
+    return new LanguageClient(command, serverOptions, clientOptions);
 }
 
-export function activate(context: ExtensionContext): void {
+async function startProduction() {
+    const cwd = path.join(__dirname, "..", "..");
+    let pythonPath: string = await vscode.commands.executeCommand('python.interpreterPath', { workspaceFolder: cwd })
+    let pythonEnvVerified = await verifyPythonEnvironment(pythonPath)
+    console.log(pythonEnvVerified)
+    if (pythonEnvVerified) {
+        vscode.window.showInformationMessage("Server started on" + pythonPath)
+        return startLangServer(pythonPath + "", ["-m", "server"], cwd)
+    } else {
+        vscode.window.showInformationMessage("Server Did Not Start")
+        return null;
+    }
+}
+
+async function verifyPythonEnvironment(pythonPath: string): Promise<Boolean> {
+    try {
+        const { stdout, stderr } = await exec(pythonPath + " -c " + importPython);
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+export async function activate(context: ExtensionContext) {
+
+    vscode.window.showInformationMessage("spaCy Extension Activated!")
+
+    client = await startProduction()
+
+
+
+    // let showPythonEnvironment = vscode.commands.registerCommand("spacy.showCurrentEnv", async () => {
+    //     const cwd = path.join(__dirname, "..", "..");
+    //     let pythonPath = await vscode.commands.executeCommand('python.interpreterPath', { workspaceFolder: cwd })
+    //     vscode.window.showInformationMessage(pythonPath + "")
+
+    // })
+    // context.subscriptions.push(showPythonEnvironment)
+
     if (context.extensionMode === ExtensionMode.Development) {
         // Development - Run the server manually
-        client = startLangServerTCP(2087);
+        // client = startLangServerTCP(2087)
     } else {
         // Production - Client is going to run the server (for use within `.vsix` package)
-        const cwd = path.join(__dirname, "..", "..");
-        const pythonPath = workspace
-            .getConfiguration("python")
-            .get<string>("pythonPath");
-
-        if (!pythonPath) {
-            throw new Error("`python.pythonPath` is not set");
-        }
-
-        client = startLangServer(pythonPath, ["-m", "server"], cwd);
+        //client = startProduction()
     }
 
-    context.subscriptions.push(client.start());
+    // context.subscriptions.push(
+    //     onDidChangePythonInterpreter(async () => {
+    //         vscode.window.showInformationMessage("Python Environment Changed!")
+    //         const cwd = path.join(__dirname, "..", "..");
+    //         let pythonPath = await vscode.commands.executeCommand('python.interpreterPath', { workspaceFolder: cwd })
+    //         vscode.window.showInformationMessage(pythonPath + "")
+    //     }),
+    // );
+
+    // const api = await getPythonExtensionAPI();
+
+    // if (api) {
+    //     console.log("API TIME?")
+    //     context.subscriptions.push(
+    //         api.environments.onDidChangeActiveEnvironmentPath((e) => {
+    //             onDidChangePythonInterpreterEvent.fire({ path: [e.path], resource: e.resource?.uri });
+    //         }),
+    //     );
+    // }
+
+    //const cwd = path.join(__dirname, "..", "..");
+    //vscode.commands.executeCommand('python.interpreterPath', { workspaceFolder: cwd }).then(async (pythonPath) => {
+    //    client = startLangServer(pythonPath + "", ["-m", "server"], cwd);
+    //    await client.start()
+    //}).then(undefined, console.error);
 }
 
 export function deactivate(): Thenable<void> {
+    vscode.window.showInformationMessage("spaCy Extension Deactivated!")
     return client ? client.stop() : Promise.resolve();
 }
+

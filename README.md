@@ -41,6 +41,11 @@ For every feature, there will be a dedicated script (e.g. `feature_hover.py`) wh
 
 ### Building the extension
 TODO
+
+npm install -g @vscode/vsce
+
+main file .client/extension.ts
+
 (Building the extension will probably be the most biggest challenge because we need to handle multiple things regarding python (e.g. python environment handling per device, etc.))
 
 ### Debugging

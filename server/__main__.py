@@ -1,29 +1,10 @@
-############################################################################
-# Copyright(c) Open Law Library. All rights reserved.                      #
-# See ThirdPartyNotices.txt in the project root for additional notices.    #
-#                                                                          #
-# Licensed under the Apache License, Version 2.0 (the "License")           #
-# you may not use this file except in compliance with the License.         #
-# You may obtain a copy of the License at                                  #
-#                                                                          #
-#     http: // www.apache.org/licenses/LICENSE-2.0                         #
-#                                                                          #
-# Unless required by applicable law or agreed to in writing, software      #
-# distributed under the License is distributed on an "AS IS" BASIS,        #
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. #
-# See the License for the specific language governing permissions and      #
-# limitations under the License.                                           #
-############################################################################
 import argparse
 import logging
 
-from .server import spacy_server
-
 logging.basicConfig(filename="pygls.log", level=logging.DEBUG, filemode="w")
 
-
 def add_arguments(parser):
-    parser.description = "simple json server example"
+    parser.description = "spacy server"
 
     parser.add_argument(
         "--tcp", action="store_true",
@@ -47,6 +28,8 @@ def main():
     parser = argparse.ArgumentParser()
     add_arguments(parser)
     args = parser.parse_args()
+
+    from .server import spacy_server
 
     if args.tcp:
         spacy_server.start_tcp(args.host, args.port)
