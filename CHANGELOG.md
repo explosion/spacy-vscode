@@ -16,7 +16,9 @@ We try to follow semantic versioning (semver) if possible:
 - Python Environment Management
 - Selecting Python Interpreter restarts the server on the new interpreter
 - Python Interpreters are tested whether they contain all needed modules
-- More logging
+- Added Output Channel for Client Server logging
+- Added StatusBar
+- Added more commands
 
 ### Changed
 - Increased version of some node modules to get the newest updates (e.g. `vscode-languageclient`)

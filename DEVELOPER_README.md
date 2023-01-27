@@ -65,13 +65,25 @@ To publish the extension use `vsce publish` (WIP)
 ### Logging / Debugging
 
 #### Client Server (TypeScript)
-To provide more information of the current state of the Client Server we use `console.info` and `console.warn` to notify the user. It should start with `spaCy Extension:` to make clear that it's related to the spaCy Extension.
+The Client Server creates an Output Channel called `spaCy Extension Client` which outputs information about the current state of the Client Server. You can add logs to it by using `logging.appendLine()`.
+It should start with `spaCy Extension:` to make clear that it's related to the spaCy Extension.
 
 #### Language Server (Python)
 
 To provide more information of the current state of the Language Server we use `logging.debug` which writes logs to `pygls.log`.
 
+You can use `server.show_message()` to show vscode message boxes.
+
+#### Statusbar
 
 ### Writing unit tests
-TODO
-(There are some unit tests from the JSON Language server but I need to futher look into this)
+
+#### Python
+All python tests are contained in the [tests folder](./server/tests/)
+Please make sure to have a modules installed, they can be found in the `tests/requirements.txt` file and installed via `pip install -e requirements.txt`.
+
+- To run all tests use `pytest ./tests` or if you're in the tests folder you can also simply use `pytest`
+- To run a specific test file use `pytest tests/test_file.py`
+- To run a specific test function in a file use `pytest test/test_file.py::test_function`
+
+> You can read more about [pytest](https://docs.pytest.org/en/7.2.x/) in their [docs](https://docs.pytest.org/en/7.2.x/how-to/index.html)
