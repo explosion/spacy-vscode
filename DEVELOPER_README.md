@@ -74,6 +74,7 @@ To provide more information of the current state of the Language Server we use `
 
 You can use `server.show_message()` to show vscode message boxes.
 
+#### Statusbar
 
 ### Writing unit tests
 

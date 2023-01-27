@@ -18,6 +18,8 @@ import { exec } from 'child_process'
 
 let client: LanguageClient;
 let logging = vscode.window.createOutputChannel("spaCy Extension Log")
+let statusBar: vscode.StatusBarItem;
+let clientActive: boolean = false;
 let currentPythonEnvironment: string;
 const importPython = "'import pygls; import spacy'"
 
@@ -108,7 +110,7 @@ async function startProduction() {
     }
 }
 
-async function verifyPythonEnvironment(pythonPath: string) {
+async function verifyPythonEnvironment(pythonPath: string): Promise<boolean> {
     /**
      * Runs a child process to verify whether the selected python environment has all modules
      * @param pythonPath - Path to the python environment
@@ -117,7 +119,7 @@ async function verifyPythonEnvironment(pythonPath: string) {
     return await execShellCommand(pythonPath + " -c " + importPython);
 }
 
-function execShellCommand(cmd) {
+function execShellCommand(cmd): Promise<boolean> {
     /**
      * Starts a child process and runs a specified command
      * @param cmd: string - Command to execute
@@ -142,16 +144,36 @@ function returnCurrentPythonEnvironment() {
 
 async function restartServer() {
     logging.appendLine("spaCy Extension: Restarting Server")
+    currentPythonEnvironment = "";
     if (client) {
+        clientActive = false;
+        statusBar.color = "red";
         client.stop().then(async (success) => {
             client = await startProduction();
-            await client.start()
-            vscode.window.showInformationMessage("spaCy Extension: Server Restarted")
+            if (client) {
+                await client.start()
+                clientActive = true;
+                statusBar.color = "white";
+                vscode.window.showInformationMessage("spaCy Extension: Server Restarted")
+            }
         })
     } else {
         client = await startProduction();
-        await client.start()
-        vscode.window.showInformationMessage("spaCy Extension: Server Restarted")
+        if (client) {
+            await client.start()
+            clientActive = true;
+            statusBar.color = "white";
+            vscode.window.showInformationMessage("spaCy Extension: Server Restarted")
+        }
+    }
+}
+
+async function showStatus() {
+    // Return Current State Of The Client Server
+    if (clientActive) {
+        vscode.window.showInformationMessage("Active On " + currentPythonEnvironment)
+    } else {
+        vscode.window.showInformationMessage("Not Active On " + currentPythonEnvironment)
     }
 }
 
@@ -162,10 +184,24 @@ export async function activate(context: ExtensionContext) {
 
     // Register Server Commands
     let _returnCurrentPythonEnvironment = vscode.commands.registerCommand("spacy-extension.pythonInterpreter", returnCurrentPythonEnvironment)
-    context.subscriptions.push(_returnCurrentPythonEnvironment)
+    context.subscriptions.push(_returnCurrentPythonEnvironment);
 
     let _restartServer = vscode.commands.registerCommand("spacy-extension.restartServer", restartServer)
-    context.subscriptions.push(_restartServer)
+    context.subscriptions.push(_restartServer);
+
+    let _showStatus = vscode.commands.registerCommand("spacy-extension.showStatus", showStatus)
+    context.subscriptions.push(_showStatus);
+
+    // Build Status Bar
+    statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    statusBar.command = "spacy-extension.showStatus";
+    statusBar.color = "red";
+    statusBar.tooltip = "Get the status of the spaCy Extension"
+    statusBar.text = "spaCy"
+    context.subscriptions.push(statusBar);
+
+    statusBar.show()
+
 
     // Register Events
 
@@ -187,12 +223,18 @@ export async function activate(context: ExtensionContext) {
             let _client = await startProduction();
             if (_client) {
                 if (client) {
+                    clientActive = false;
+                    statusBar.color = "red";
                     client.stop().then(async (success) => {
                         client = _client
+                        clientActive = true;
+                        statusBar.color = "white";
                         await client.start();
                     })
                 } else {
                     client = _client
+                    clientActive = true;
+                    statusBar.color = "white";
                     await client.start();
                 }
             } else {
@@ -205,22 +247,24 @@ export async function activate(context: ExtensionContext) {
 
     if (context.extensionMode === ExtensionMode.Development) {
         // Development - Run the server manually
-        //client = startLangServerTCP(2087)
+        client = startLangServerTCP(2087)
     } else {
         // Production - Client is going to run the server (for use within `.vsix` package)
         client = await startProduction()
     }
 
-    client = await startProduction()
-
     if (client) {
         await client.start()
+        clientActive = true;
+        statusBar.color = "white";
     }
 
 }
 
 export function deactivate(): Thenable<void> {
     vscode.window.showInformationMessage("spaCy Extension Deactivated!")
+    clientActive = false;
+    statusBar.color = "red";
     return client ? client.stop() : Promise.resolve();
 }
 
