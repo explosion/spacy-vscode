@@ -12,9 +12,21 @@ from lsprotocol.types import (
 
 import re
 from typing import Optional
-from spacy import registry
+from spacy import registry, schemas, glossary
 from .spacy_server import SpacyLanguageServer
 from .util import get_current_word
+
+# glossary for now, to be replaced with glossary.CONFIG_DESCRIPTIONS from spacy
+section_glossary = {
+    "nlp": "Definition of the nlp object, its tokenizer and processing pipeline component names",
+    "components": "Definitions of the pipeline components and their models.",
+    "paths": "Paths to data and other assets. Re-used across the config as variables, e.g. ${paths.train}, and can be overwritten on the CLI.",
+    "system": "Settings related to system and hardware. Re-used across the config as variables, e.g. ${system.seed}, and can be overwritten on the CLI.",
+    "training": "Settings and controls for the training and evaluation process.",
+    "pretraining": "Optional settings and controls for the language model pretraining.",
+    "initialize": "Data resources and arguments passed to components when nlp.initialize is called before training (but not at runtime).",
+    "corpora": "Readers for corpora like dev and train.",
+}
 
 
 def hover(
@@ -22,7 +34,6 @@ def hover(
 ) -> Optional[Hover]:
     """
     Implements the Hover functionality
-    Check if currently hovered text is registered in the spaCy registry and return its description.
     """
     document = server.workspace.get_document(params.text_document.uri)
 
@@ -31,8 +42,39 @@ def hover(
 
     line_n = params.position.line
     line_str = document.lines[line_n]
-
     current_word, w_start, w_end = get_current_word(line_str, params.position.character)
+
+    # checks through each resolver to see if it matches, returns the hover display
+    # I feel like there's a better way to implement this, but not sure what that is
+    if registry_resolver(line_str, current_word, w_start, w_end) != (None, None, None):
+        hover_display, h_start, h_end = registry_resolver(
+            line_str, current_word, w_start, w_end
+        )
+    elif section_resolver(line_str, current_word, w_start, w_end) != (None, None, None):
+        hover_display, h_start, h_end = section_resolver(
+            line_str, current_word, w_start, w_end
+        )
+    else:
+        hover_display, h_start, h_end = None, None, None
+
+
+    if hover_display != None:
+        return Hover(
+            contents=MarkupContent(kind=MarkupKind.Markdown, value=hover_display),
+            range=Range(
+                start=Position(line=line_n, character=h_start),
+                end=Position(line=line_n, character=h_end + 1),
+            ),
+        )
+    else:
+        return None
+
+
+def registry_resolver(line_str, current_word, w_start, w_end):
+    """
+    Check if currently hovered text is registered in the spaCy registry and return its description.
+    """
+    
     registry_name, r_start, r_end = detect_registry_names(line_str, w_start, w_end)
     if registry_name:
         registry_type, t_start, t_end = detect_registry_type(line_str, r_start)
@@ -45,11 +87,11 @@ def hover(
         r_start = w_start
         r_end = w_end
 
-    try:
-        # Hardcoded renaming
-        if registry_type == "factory":
-            registry_type = "factories"
+    # Hardcoded renaming
+    if registry_type == "factory":
+        registry_type = "factories"
 
+    try:
         # Retrieve data from registry
         registry_desc = registry.find(registry_type, registry_name)
 
@@ -65,16 +107,9 @@ def hover(
         # TODO Fine-Tune display message
         hover_display = f"## ⚙️ {registry_name} \n {registry_docstring}"
 
-        return Hover(
-            contents=MarkupContent(kind=MarkupKind.Markdown, value=hover_display),
-            range=Range(
-                start=Position(line=line_n, character=r_start),
-                end=Position(line=line_n, character=r_end + 1),
-            ),
-        )
-
+        return hover_display, r_start, r_end
     except Exception as e:
-        return None
+        return None, None, None
 
 
 def detect_registry_names(line: str, word_start: int, word_end: int):
@@ -128,12 +163,9 @@ def detect_registry_names(line: str, word_start: int, word_end: int):
                 registry_name_end = word_end
 
         full_registry_name = line[registry_name_start : registry_name_end + 1]
-        registry_regex = r"[\w\d]*\.[\w\d]*\.[\w\d]*"
-        registry_regex_alt = r"[\w\d]*\.[\w\d]*"
+        registry_regex = r"[\w\d]*\.[\w\d]*(\.[\w\d]*)?"
 
         if re.match(registry_regex, full_registry_name):
-            return full_registry_name, registry_name_start, registry_name_end
-        elif re.match(registry_regex_alt, full_registry_name):
             return full_registry_name, registry_name_start, registry_name_end
         else:
             return None, None, None
@@ -164,3 +196,46 @@ def detect_registry_type(line: str, registry_start: int):
             break
 
     return line[t_start : t_end + 1], t_start, t_end
+
+
+def section_resolver(line_str, current_word, w_start, w_end):
+    """
+    Check if current hovered text is a section title and then return it's description
+
+    EXAMPLES:
+    [training]
+    [training.batcher.size] 
+    """
+
+    config_schemas = {
+        "nlp": schemas.ConfigSchemaNlp,
+        "training": schemas.ConfigSchemaTraining,
+        "pretraining": schemas.ConfigSchemaPretrain,
+        "initialize": schemas.ConfigSchemaInit,
+    }
+
+    try:
+        # match the section titles, always start with a bracket
+        if line_str[0] == "[":
+            # break section into a list of components
+            sections_list = line_str[1:-2].split(".")
+            # if the current hover word is in the dictionary of descriptions
+            if current_word in section_glossary.keys():
+                # TODO Fine-Tune display message
+                hover_display = f"## ⚙️ {current_word} \n {section_glossary[current_word]}"
+                return hover_display, w_start, w_end
+            elif current_word == sections_list[1] and sections_list[0] in config_schemas.keys():
+                # get field title from the config schema
+                field_title = (
+                    config_schemas[sections_list[0]]
+                    .__fields__[sections_list[1]]
+                    .field_info.title
+                )
+                # TODO Fine-Tune display message
+                hover_display = (
+                    f"## ⚙️ {sections_list[0]} -> {sections_list[1]} \n {field_title}"
+                )
+                return hover_display, w_start, w_end
+
+    except Exception as e:
+        return None, None, None
