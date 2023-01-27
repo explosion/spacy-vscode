@@ -17,6 +17,7 @@ import {
 import { exec } from 'child_process'
 
 let client: LanguageClient;
+let logging = vscode.window.createOutputChannel("spaCy Extension Log")
 let currentPythonEnvironment: string;
 const importPython = "'import pygls; import spacy'"
 
@@ -86,7 +87,7 @@ async function startProduction() {
     let defaultPythonPath: string = workspace.getConfiguration("spacy-extension").get("defaultPythonInterpreter")
     let pythonPath: string = "";
     if (defaultPythonPath != "") {
-        console.log("spaCy Extension: Default Python Interpreter Selected: " + defaultPythonPath)
+        logging.appendLine("spaCy Extension: Default Python Interpreter Selected: " + defaultPythonPath)
         pythonPath = defaultPythonPath;
         currentPythonEnvironment = defaultPythonPath;
     } else {
@@ -100,7 +101,7 @@ async function startProduction() {
         } else {
             return null;
         }
-        console.info("spaCy Extension: Uses Python Interpreter: " + currentPythonEnvironment)
+        logging.appendLine("spaCy Extension: Uses Python Interpreter: " + currentPythonEnvironment)
         return startLangServer(currentPythonEnvironment + "", ["-m", "server"], cwd)
     } else {
         return null;
@@ -140,7 +141,7 @@ function returnCurrentPythonEnvironment() {
 }
 
 async function restartServer() {
-    console.info("spaCy Extension: Restarting Server")
+    logging.appendLine("spaCy Extension: Restarting Server")
     if (client) {
         client.stop().then(async (success) => {
             client = await startProduction();
@@ -156,7 +157,8 @@ async function restartServer() {
 
 export async function activate(context: ExtensionContext) {
 
-    console.info("spaCy Extension: Active")
+    logging.show()
+    logging.appendLine("spaCy Extension: Active")
 
     // Register Server Commands
     let _returnCurrentPythonEnvironment = vscode.commands.registerCommand("spacy-extension.pythonInterpreter", returnCurrentPythonEnvironment)
@@ -170,7 +172,7 @@ export async function activate(context: ExtensionContext) {
     // Initialize Python Listener
     const pythonAPI = await getPythonExtensionAPI();
     if (pythonAPI) {
-        console.info("spaCy Extension: Python Listener Initialized")
+        logging.appendLine("spaCy Extension: Python Listener Initialized")
         context.subscriptions.push(
             pythonAPI.environments.onDidChangeActiveEnvironmentPath((e) => {
                 onDidChangePythonInterpreterEvent.fire({ path: [e.path], resource: e.resource?.uri });
@@ -181,7 +183,7 @@ export async function activate(context: ExtensionContext) {
     // Restart Server Whenerver Python Interpreter Changes
     context.subscriptions.push(
         onDidChangePythonInterpreter(async () => {
-            console.info("spaCy Extension: Python Interpreter Changed")
+            logging.appendLine("spaCy Extension: Python Interpreter Changed")
             let _client = await startProduction();
             if (_client) {
                 if (client) {
@@ -194,7 +196,7 @@ export async function activate(context: ExtensionContext) {
                     await client.start();
                 }
             } else {
-                console.info("spaCy Extension: Server Will Stay On Previous Interpreter: " + currentPythonEnvironment)
+                logging.appendLine("spaCy Extension: Server Will Stay On Previous Interpreter: " + currentPythonEnvironment)
             }
         }),
     );
@@ -203,11 +205,13 @@ export async function activate(context: ExtensionContext) {
 
     if (context.extensionMode === ExtensionMode.Development) {
         // Development - Run the server manually
-        client = startLangServerTCP(2087)
+        //client = startLangServerTCP(2087)
     } else {
         // Production - Client is going to run the server (for use within `.vsix` package)
         client = await startProduction()
     }
+
+    client = await startProduction()
 
     if (client) {
         await client.start()
