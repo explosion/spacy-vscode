@@ -10,6 +10,20 @@ We try to follow semantic versioning (semver) if possible:
 
 > Given a version number 1.2.3, 1 is the major number, 2 the minor and 3 the patch number.
 
+## [0.2.0] - 26/01/2022
+
+### Added
+- Python Environment Management
+- Selecting Python Interpreter restarts the server on the new interpreter
+- Python Interpreters are tested whether they contain all needed modules
+- More logging
+
+### Changed
+- Increased version of some node modules to get the newest updates (e.g. `vscode-languageclient`)
+
+### Fixed
+
+
 ## [0.1.0] - 12/01/2022
 
 ### Added

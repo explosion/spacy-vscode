@@ -1,16 +1,19 @@
 {
-  "name": "spaCy_Extension",
+  "name": "spacy-extension",
   "description": "spaCy support for .cfg files",
   "author": "Explosion AI",
-  "repository": "https://github.com/explosion",
+  "repository": "https://github.com/explosion/spacy-vscode",
   "license": "MIT",
-  "version": "0.0.1",
+  "version": "0.2.0",
   "publisher": "Explosion AI",
   "engines": {
-    "vscode": "^1.62.0"
+    "vscode": "^1.74.0"
   },
   "categories": [
     "Other"
+  ],
+  "extensionDependencies": [
+    "ms-python.python"
   ],
   "activationEvents": [
     "workspaceContains:*.cfg"
@@ -20,16 +23,26 @@
       {
         "command": "spacy_test",
         "title": "spaCy Test"
+      },
+      {
+        "command": "spacy-extension.pythonInterpreter",
+        "title": "Return Python Interpreter",
+        "category": "spaCy-Extension"
+      },
+      {
+        "command": "spacy-extension.restartServer",
+        "title": "Restart Language Server",
+        "category": "spaCy-Extension"
       }
     ],
     "configuration": {
-      "type": "object",
-      "title": "Json Server Configuration",
+      "title": "spaCy Server Configuration",
       "properties": {
-        "jsonServer.exampleConfiguration": {
+        "spacy-extension.defaultPythonInterpreter": {
           "scope": "resource",
           "type": "string",
-          "default": "You can override this message."
+          "default": "",
+          "description": "Specify which Python Interpreter should be used to start the spaCy Extension Server. Please make sure that the selected environment contains all required modules (pygls, spacy). If this setting is empty (by default), the spaCy Extension will use the selected Python Interpreter from your current workspace."
         }
       }
     }
@@ -41,14 +54,14 @@
     "watch": "tsc -b -w"
   },
   "devDependencies": {
-    "@types/node": "^16.11.6",
-    "@types/vscode": "^1.62.0",
+    "@types/node": "16.11.43",
+    "@types/vscode": "^1.74.0",
     "@typescript-eslint/eslint-plugin": "^5.3.0",
     "@typescript-eslint/parser": "^5.3.0",
     "eslint": "^8.2.0",
     "typescript": "^4.4.4"
   },
   "dependencies": {
-    "vscode-languageclient": "^7.0.0"
+    "vscode-languageclient": "^8.0.2"
   }
 }
