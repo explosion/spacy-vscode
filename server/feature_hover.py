@@ -46,16 +46,13 @@ def hover(
 
     # checks through each resolver to see if it matches, returns the hover display
     # I feel like there's a better way to implement this, but not sure what that is
-    if registry_resolver(line_str, current_word, w_start, w_end) != (None, None, None):
-        hover_display, h_start, h_end = registry_resolver(
+    hover_display, h_start, h_end = registry_resolver(
             line_str, current_word, w_start, w_end
         )
-    elif section_resolver(line_str, current_word, w_start, w_end) != (None, None, None):
+    if hover_display == None:
         hover_display, h_start, h_end = section_resolver(
             line_str, current_word, w_start, w_end
         )
-    else:
-        hover_display, h_start, h_end = None, None, None
 
 
     if hover_display != None:
@@ -236,6 +233,8 @@ def section_resolver(line_str, current_word, w_start, w_end):
                     f"## ⚙️ {sections_list[0]} -> {sections_list[1]} \n {field_title}"
                 )
                 return hover_display, w_start, w_end
+        else:
+            return None, None, None
 
     except Exception as e:
         return None, None, None
