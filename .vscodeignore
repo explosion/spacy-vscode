@@ -6,7 +6,7 @@ tsconfig.json
 tslint.json
 package.json
 package-lock.json
-extension_env
+working_env
 .pytest_cache
 *.vsix
 *.log

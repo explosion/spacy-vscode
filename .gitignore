@@ -7,4 +7,5 @@ working_env
 *.vsix
 *.log
 __pycache__
+.pytest_cache
 test.py
