@@ -372,8 +372,7 @@ export async function activate(context: ExtensionContext) {
 
     if (context.extensionMode === ExtensionMode.Development) {
       // Development - Run the server manually
-      //client = startLangServerTCP(2087);
-      client = await startProduction();
+      client = startLangServerTCP(2087);
     } else {
       // Production - Client is going to run the server (for use within `.vsix` package)
       client = await startProduction();
