@@ -168,7 +168,6 @@ after_init = null
 """
 fake_document = Document(fake_document_uri, fake_document_content)
 
-
 server = FakeServer()
 server.publish_diagnostics = Mock()
 server.show_message = Mock()
@@ -204,3 +203,22 @@ def test_resolve_registries(line, character, registry_name):
     )
     hover_obj = hover_feature(server, params)
     assert registry_name in hover_obj.contents.value
+
+# Test Hover Resolve Sections
+@pytest.mark.parametrize(
+    "line, character, section_name",
+    [
+        (72, 1, "corpora"),
+        (80, 1, "training"),
+        (94, 10, "batcher"),
+    ],
+)
+
+def test_resolve_sections(line, character, section_name):
+    _reset_mocks()
+    params = TextDocumentPositionParams(
+        text_document=TextDocumentIdentifier(uri=fake_document.uri),
+        position=Position(line=line, character=character),
+    )
+    hover_obj = hover_feature(server, params)
+    assert section_name in hover_obj.contents.value
