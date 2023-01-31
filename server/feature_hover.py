@@ -138,8 +138,8 @@ def detect_registry_names(line: str, current_word: str) -> tuple[str, int, int]:
     spacy-legacy.registry_name.v2
     compounding.v1
     """
-    # match optional first segment (i.e. spacy.), required second segement, and required third segement (i.e. ".v<any_number>")
-    registry_regex = r"([\w\d]*\.)?[\w\d]*\.v[\d]*"
+    # match optional first segment (i.e. spacy.), required second segment and version (i.e. "<letters and underscores>.v<any_numbers>")
+    registry_regex = r"([\w]*\.)?[\w]*\.v[\d]*"
     registry_match = re.search(registry_regex, line)
 
     if registry_match != None:
