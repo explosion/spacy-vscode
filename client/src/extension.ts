@@ -8,7 +8,7 @@ import {
   onDidChangePythonInterpreter,
   getPythonExtensionAPI,
   onDidChangePythonInterpreterEvent,
-} from "./common/python";
+} from "./python";
 import {
   LanguageClient,
   LanguageClientOptions,
@@ -20,7 +20,9 @@ import { compare } from "compare-versions";
 let client: LanguageClient;
 
 // Status Logging
-let logging = vscode.window.createOutputChannel("spaCy Extension Log");
+let logging = vscode.window.createOutputChannel("spaCy Extension Log", {
+  log: true,
+});
 let statusBar: vscode.StatusBarItem;
 let clientActive: boolean = false;
 
@@ -34,7 +36,7 @@ const pygls_version = "1.0.0";
 // Server Functionality
 
 const clientOptions: LanguageClientOptions = {
-  // Register the server for plain text documents
+  // Register the server for .cfg files
   documentSelector: [
     { scheme: "file", pattern: "**/*.cfg" },
     { scheme: "untitled", pattern: "**/*.cfg" },
@@ -92,7 +94,7 @@ async function startProduction() {
    * Starts both the Client Server and the Python Server
    * @returns LanguageClient
    */
-  logging.appendLine("spaCy Extension: Attempting Starting Client");
+  logging.info("spaCy Extension: Attempting Starting Client");
   const cwd = path.join(__dirname, "..", "..");
   // Retrieve path to current active python environment
   let defaultPythonPath: string = workspace
@@ -100,34 +102,30 @@ async function startProduction() {
     .get("defaultPythonInterpreter");
   let pythonPath: string = "";
   if (defaultPythonPath != "") {
-    logging.appendLine(
+    logging.info(
       "spaCy Extension: Default Python Interpreter Selected: " +
         defaultPythonPath
     );
     pythonPath = defaultPythonPath;
     currentPythonEnvironment = defaultPythonPath;
   } else {
-    logging.appendLine(
-      "spaCy Extension: Retrieving Selected Python Interpreter"
-    );
+    logging.info("spaCy Extension: Retrieving Selected Python Interpreter");
     pythonPath = await vscode.commands.executeCommand(
       "python.interpreterPath",
       { workspaceFolder: cwd }
     );
-    logging.appendLine(
-      "spaCy Extension: Retrieved Python Interpreter" + pythonPath
-    );
+    logging.info("spaCy Extension: Retrieved Python Interpreter" + pythonPath);
   }
   // Check whether active python environment has all modules installed (pygls, spacy)
   let pythonEnvVerified = await verifyPythonEnvironment(pythonPath);
-  logging.appendLine(
+  logging.info(
     "spaCy Extension: Python Environment Compatible: " + pythonEnvVerified
   );
   if (pythonEnvVerified) {
     if (currentPythonEnvironment != pythonPath && defaultPythonPath == "") {
       currentPythonEnvironment = pythonPath;
     } else {
-      logging.appendLine(
+      logging.error(
         "spaCy Extension: Attempting To Start Client Rejected ( Current: " +
           currentPythonEnvironment +
           " | Python: " +
@@ -137,7 +135,7 @@ async function startProduction() {
       );
       return null;
     }
-    logging.appendLine(
+    logging.info(
       "spaCy Extension: Using Python Interpreter: " + currentPythonEnvironment
     );
     return startLangServer(
@@ -146,10 +144,12 @@ async function startProduction() {
       cwd
     );
   } else {
-    logging.appendLine("spaCy Extension: Attempting To Start Client Failed");
+    logging.error("spaCy Extension: Attempting To Start Client Failed");
     return null;
   }
 }
+
+// Python Functionality
 
 async function verifyPythonEnvironment(pythonPath: string): Promise<boolean> {
   /**
@@ -157,22 +157,28 @@ async function verifyPythonEnvironment(pythonPath: string): Promise<boolean> {
    * @param pythonPath - Path to the python environment
    * @returns Promise<Boolean>
    */
-  return await execImportCommand(pythonPath + " -c " + importPython);
+  return await importCommand(pythonPath + " -c " + importPython);
 }
 
-function execImportCommand(cmd): Promise<boolean> {
+function importCommand(cmd): Promise<boolean> {
   /**
-   * Starts a child process and runs a the import command
+   * Starts a child process and runs the python import command
    * @param cmd: string - Import command to execute
    * @returns Promise<Boolean>
    */
   return new Promise((resolve, reject) => {
     exec(cmd, (error, stdout, stderr) => {
       if (error) {
-        logging.appendLine(
-          "spaCy Extension: Selected Python Interpreter has missing modules required to run the extension: " +
-            error.message
-        );
+        if (error.message.includes("ModuleNotFoundError:")) {
+          let moduleNotFound = error.message
+            .split("ModuleNotFoundError:")[1]
+            .trim();
+          logging.error(
+            "spaCy Extension: Selected Python Interpreter has missing modules required to run the extension: " +
+              moduleNotFound
+          );
+          resolve(false);
+        }
         resolve(false);
       }
       let module_versions = stdout.split(" ");
@@ -181,7 +187,7 @@ function execImportCommand(cmd): Promise<boolean> {
         compare(pygls_version, module_versions[0].trim(), ">=") &&
         compare(spaCy_version, module_versions[1].trim(), ">=")
       ) {
-        logging.appendLine(
+        logging.info(
           "spaCy Extension: Module Versions Compatible: pygls " +
             module_versions[0].trim() +
             " >= " +
@@ -193,7 +199,7 @@ function execImportCommand(cmd): Promise<boolean> {
         );
         resolve(true);
       } else {
-        logging.appendLine(
+        logging.error(
           "spaCy Extension: Module Versions Not Compatible: pygls " +
             module_versions[0].trim() +
             " >= " +
@@ -212,21 +218,22 @@ function execImportCommand(cmd): Promise<boolean> {
 // Server Commands
 
 function returnCurrentPythonEnvironment() {
+  // Return the current used python environment
   vscode.window.showInformationMessage(currentPythonEnvironment);
 }
 
 async function restartServer() {
-  logging.appendLine("spaCy Extension: Restarting Server");
+  // Restart the server
+  logging.clear();
+  logging.info("spaCy Extension: Restarting Server");
   currentPythonEnvironment = "";
   if (client) {
-    clientActive = false;
-    statusBar.color = "red";
+    setStatus(false);
     client.stop().then(async (success) => {
       client = await startProduction();
       if (client) {
         await client.start();
-        clientActive = true;
-        statusBar.color = "white";
+        setStatus(true);
         vscode.window.showInformationMessage(
           "spaCy Extension: Server Restarted"
         );
@@ -236,29 +243,47 @@ async function restartServer() {
     client = await startProduction();
     if (client) {
       await client.start();
-      clientActive = true;
-      statusBar.color = "white";
+      setStatus(true);
       vscode.window.showInformationMessage("spaCy Extension: Server Restarted");
     }
   }
 }
 
 async function showStatus() {
-  // Return Current State Of The Client Server
+  // Return the current state of the server
   if (clientActive) {
-    vscode.window.showInformationMessage(
-      "Active On " + currentPythonEnvironment
-    );
+    vscode.window.showInformationMessage("spaCy Extension Active");
   } else {
-    vscode.window.showInformationMessage(
-      "Not Active On " + currentPythonEnvironment
-    );
+    vscode.window.showInformationMessage("spaCy Extension Not Active");
   }
 }
 
+// Helper Functions
+
+function setStatus(b: boolean) {
+  /**
+   * Set the status bar color depending whether the client is active or not
+   * @params b: boolean - Is Client Active?
+   */
+  clientActive = b;
+  if (clientActive) {
+    statusBar.color = "white";
+  } else {
+    statusBar.color = "red";
+  }
+}
+
+// Main methods
+
 export async function activate(context: ExtensionContext) {
   logging.show();
-  logging.appendLine("spaCy Extension: Activated");
+  logging.info("spaCy Extension: Activated");
+
+  // Check if Python Extension is installed
+  if (!vscode.extensions.getExtension("ms-python.python")) {
+    logging.error("spaCy Extension: Python Extension Not Installed");
+    return null;
+  }
 
   // Register Server Commands
   let _returnCurrentPythonEnvironment = vscode.commands.registerCommand(
@@ -292,7 +317,7 @@ export async function activate(context: ExtensionContext) {
 
   statusBar.show();
 
-  logging.appendLine("spaCy Extension: Commands Registered");
+  logging.info("spaCy Extension: Commands Registered");
 
   // Register Events
 
@@ -300,7 +325,7 @@ export async function activate(context: ExtensionContext) {
   try {
     const pythonAPI = await getPythonExtensionAPI();
     if (pythonAPI) {
-      logging.appendLine("spaCy Extension: Python Listener Initialized");
+      logging.info("spaCy Extension: Python Listener Initialized");
       context.subscriptions.push(
         pythonAPI.environments.onDidChangeActiveEnvironmentPath((e) => {
           onDidChangePythonInterpreterEvent.fire({
@@ -311,33 +336,31 @@ export async function activate(context: ExtensionContext) {
       );
     }
 
-    // Restart Server Whenerver Python Interpreter Changes
+    // Restart Server whenerver Python Interpreter changes
     context.subscriptions.push(
       onDidChangePythonInterpreter(async () => {
         /**
          * Change the Python Interpreter whenever a change event was triggered.
          * Only change the Interpreter if it's compatible, otherwise stay on the current Interpreter
          */
-        logging.appendLine("spaCy Extension: Python Interpreter Changed");
+        logging.clear();
+        logging.info("spaCy Extension: Python Interpreter Changed");
         let _client = await startProduction();
         if (_client) {
           if (client) {
-            clientActive = false;
-            statusBar.color = "red";
+            setStatus(false);
             client.stop().then(async (success) => {
               client = _client;
-              clientActive = true;
-              statusBar.color = "white";
+              setStatus(true);
               await client.start();
             });
           } else {
             client = _client;
-            clientActive = true;
-            statusBar.color = "white";
+            setStatus(true);
             await client.start();
           }
         } else {
-          logging.appendLine(
+          logging.warn(
             "spaCy Extension: Server Will Stay On Previous Interpreter: " +
               currentPythonEnvironment
           );
@@ -357,21 +380,20 @@ export async function activate(context: ExtensionContext) {
     }
 
     if (client) {
-      logging.appendLine("spaCy Extension: Starting Client Server");
+      logging.info("spaCy Extension: Starting Client Server");
       await client.start();
-      clientActive = true;
-      statusBar.color = "white";
+      setStatus(true);
     }
   } catch (e) {
     // Handle unexpected errors when initializing
-    logging.appendLine("spaCy Extension: Something went wrong!");
-    logging.appendLine("spaCy Extension: " + e);
+    logging.error("spaCy Extension: Something Went Wrong!");
+    logging.error("spaCy Extension: " + e);
   }
 }
 
 export function deactivate(): Thenable<void> {
   vscode.window.showInformationMessage("spaCy Extension Deactivated!");
-  clientActive = false;
-  statusBar.color = "red";
+  setStatus(false);
+  statusBar.hide();
   return client ? client.stop() : Promise.resolve();
 }
