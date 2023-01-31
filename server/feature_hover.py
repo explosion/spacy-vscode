@@ -15,7 +15,6 @@ from typing import Optional
 from spacy import registry, schemas, glossary
 from .spacy_server import SpacyLanguageServer
 from .util import get_current_word
-import typer
 
 # glossary for now, to be replaced with glossary.CONFIG_DESCRIPTIONS from spacy
 section_glossary = {
