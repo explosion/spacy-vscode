@@ -15,6 +15,7 @@ from typing import Optional
 from spacy import registry, schemas, glossary
 from .spacy_server import SpacyLanguageServer
 from .util import get_current_word
+import typer
 
 # glossary for now, to be replaced with glossary.CONFIG_DESCRIPTIONS from spacy
 section_glossary = {
@@ -47,13 +48,12 @@ def hover(
     # checks through each resolver to see if it matches, returns the hover display
     # I feel like there's a better way to implement this, but not sure what that is
     hover_display, h_start, h_end = registry_resolver(
-            line_str, current_word, w_start, w_end
-        )
+        line_str, current_word, w_start, w_end
+    )
     if hover_display == None:
         hover_display, h_start, h_end = section_resolver(
             line_str, current_word, w_start, w_end
         )
-
 
     if hover_display != None:
         return Hover(
@@ -67,11 +67,16 @@ def hover(
         return None
 
 
-def registry_resolver(line_str, current_word, w_start, w_end):
+def registry_resolver(
+    line_str: str = typer.Argument(..., help="The line being hovered"),
+    current_word: str = typer.Argument(..., help="The word being hovered"),
+    w_start: int = typer.Argument(..., help="The start index of the word being hovered"),
+    w_end: int = typer.Argument(..., help="The end index of the word being hovered"),
+):
     """
     Check if currently hovered text is registered in the spaCy registry and return its description.
     """
-    
+
     registry_name, r_start, r_end = detect_registry_names(line_str, w_start, w_end)
     if registry_name:
         registry_type, t_start, t_end = detect_registry_type(line_str, r_start)
@@ -106,10 +111,15 @@ def registry_resolver(line_str, current_word, w_start, w_end):
 
         return hover_display, r_start, r_end
     except Exception as e:
+        # return empty hover display, registry start index, registry end index
         return None, None, None
 
 
-def detect_registry_names(line: str, word_start: int, word_end: int):
+def detect_registry_names(
+    line: str = typer.Argument(..., help="The line being hovered upon"),
+    word_start: int = typer.Argument(..., help="The start index of the word being hovered"),
+    word_end: int = typer.Argument(..., help="The start index of the word being hovered"),
+):
     """
     Detect if a word indicates a registry name
 
@@ -165,12 +175,16 @@ def detect_registry_names(line: str, word_start: int, word_end: int):
         if re.match(registry_regex, full_registry_name):
             return full_registry_name, registry_name_start, registry_name_end
         else:
+            # returns empty registry name, start index, and end index
             return None, None, None
     else:
         return None, None, None
 
 
-def detect_registry_type(line: str, registry_start: int):
+def detect_registry_type(
+    line: str = typer.Argument(..., help="The line being hovered"),
+    registry_start: int = typer.Argument(..., help="The start index of the registry name"),
+):
     """
     Detect type and return type and name of registry
 
@@ -192,16 +206,22 @@ def detect_registry_type(line: str, registry_start: int):
             registry_type, t_start, t_end = get_current_word(line, i)
             break
 
+    # returns registry type, start index of type, and end index of type
     return line[t_start : t_end + 1], t_start, t_end
 
 
-def section_resolver(line_str, current_word, w_start, w_end):
+def section_resolver(
+    line_str: str = typer.Argument(..., help="The line being hovered"),
+    current_word: str = typer.Argument(..., help="The word being hovered"),
+    w_start: int = typer.Argument(..., help="The start index of the word being hovered"),
+    w_end: int = typer.Argument(..., help="The end index of the word being hovered"),
+):
     """
     Check if current hovered text is a section title and then return it's description
 
     EXAMPLES:
     [training]
-    [training.batcher.size] 
+    [training.batcher.size]
     """
 
     config_schemas = {
@@ -219,9 +239,14 @@ def section_resolver(line_str, current_word, w_start, w_end):
             # if the current hover word is in the dictionary of descriptions
             if current_word in section_glossary.keys():
                 # TODO Fine-Tune display message
-                hover_display = f"## ⚙️ {current_word} \n {section_glossary[current_word]}"
+                hover_display = (
+                    f"## ⚙️ {current_word} \n {section_glossary[current_word]}"
+                )
                 return hover_display, w_start, w_end
-            elif current_word == sections_list[1] and sections_list[0] in config_schemas.keys():
+            elif (
+                current_word == sections_list[1]
+                and sections_list[0] in config_schemas.keys()
+            ):
                 # get field title from the config schema
                 field_title = (
                     config_schemas[sections_list[0]]
@@ -233,7 +258,11 @@ def section_resolver(line_str, current_word, w_start, w_end):
                     f"## ⚙️ {sections_list[0]} -> {sections_list[1]} \n {field_title}"
                 )
                 return hover_display, w_start, w_end
+            else:
+                 # returns empty hover display, section start, and section end
+                return None, None, None
         else:
+            # returns empty hover display, section start, and section end
             return None, None, None
 
     except Exception as e:
