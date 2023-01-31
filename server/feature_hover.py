@@ -120,9 +120,7 @@ def registry_resolver(
         return None, None, None
 
 
-def detect_registry_names(
-    line: str, current_word: str
-) -> tuple[str, int, int]:
+def detect_registry_names(line: str, current_word: str) -> tuple[str, int, int]:
     """
     Detect if a word indicates a registry name
 

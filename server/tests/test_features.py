@@ -204,6 +204,7 @@ def test_resolve_registries(line, character, registry_name):
     hover_obj = hover_feature(server, params)
     assert registry_name in hover_obj.contents.value
 
+
 # Test Hover Resolve Sections
 @pytest.mark.parametrize(
     "line, character, section_name",
@@ -213,7 +214,6 @@ def test_resolve_registries(line, character, registry_name):
         (94, 10, "batcher"),
     ],
 )
-
 def test_resolve_sections(line, character, section_name):
     _reset_mocks()
     params = TextDocumentPositionParams(
