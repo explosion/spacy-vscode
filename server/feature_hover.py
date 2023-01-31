@@ -45,8 +45,6 @@ def hover(
     line_str = document.lines[line_n]
     current_word, w_start, w_end = get_current_word(line_str, params.position.character)
 
-    # checks through each resolver to see if it matches, returns the hover display
-    # I feel like there's a better way to implement this, but not sure what that is
     hover_display, h_start, h_end = registry_resolver(
         line_str, current_word, w_start, w_end
     )
@@ -68,13 +66,21 @@ def hover(
 
 
 def registry_resolver(
-    line_str: str = typer.Argument(..., help="The line being hovered"),
-    current_word: str = typer.Argument(..., help="The word being hovered"),
-    w_start: int = typer.Argument(..., help="The start index of the word being hovered"),
-    w_end: int = typer.Argument(..., help="The end index of the word being hovered"),
-):
+    line_str: str, current_word: str, w_start: int, w_end: int
+) -> tuple[str, int, int]:
     """
     Check if currently hovered text is registered in the spaCy registry and return its description.
+
+    ARGUMENTS:
+    line_str (str): the current line as a string.
+    current_word (str): the current word being hovered.
+    w_start (int): The start index of the current_word.
+    w_end (int): The end index of the current_word.
+
+    RETURN:
+    hover_display (str): The string to display in the hover box.
+    w_start (int): The start index of the hover word (current_word)
+    w_end (int): The end index of the hover word (current_word)
     """
 
     registry_name, r_start, r_end = detect_registry_names(line_str, w_start, w_end)
@@ -110,18 +116,26 @@ def registry_resolver(
         hover_display = f"## ⚙️ {registry_name} \n {registry_docstring}"
 
         return hover_display, r_start, r_end
+
     except Exception as e:
-        # return empty hover display, registry start index, registry end index
         return None, None, None
 
 
 def detect_registry_names(
-    line: str = typer.Argument(..., help="The line being hovered upon"),
-    word_start: int = typer.Argument(..., help="The start index of the word being hovered"),
-    word_end: int = typer.Argument(..., help="The start index of the word being hovered"),
-):
+    line: str, word_start: int, word_end: int
+) -> tuple[str, int, int]:
     """
     Detect if a word indicates a registry name
+
+    ARGUMENTS:
+    line (str): the current line as a string.
+    word_start (int): The start index of the current hover word.
+    word_end (int): The end index of the current hover word.
+
+    RETURN:
+    full_registry_name (str): The full registry name as a string
+    registry_name_start (int): The start index of the full registry name
+    registry_name_end (int): The end index of the full registry name
 
     Examples:
     spacy.registry_name_.v1
@@ -181,12 +195,19 @@ def detect_registry_names(
         return None, None, None
 
 
-def detect_registry_type(
-    line: str = typer.Argument(..., help="The line being hovered"),
-    registry_start: int = typer.Argument(..., help="The start index of the registry name"),
-):
+def detect_registry_type(line: str, registry_start: int) -> tuple[str, int, int]:
     """
     Detect type and return type and name of registry
+
+    ARGUMENTS:
+    line (str): the current line as a string.
+    registry_start (int): The start index of the current hover word.
+
+    RETURN:
+    full_registry_name (str): The full registry type as a string
+    registry_name_start (int): The start index of the registry type
+    registry_name_end (int): The end index of the registry type
+
 
     EXAMPLES:
     @architecture
@@ -206,18 +227,26 @@ def detect_registry_type(
             registry_type, t_start, t_end = get_current_word(line, i)
             break
 
-    # returns registry type, start index of type, and end index of type
     return line[t_start : t_end + 1], t_start, t_end
 
 
 def section_resolver(
-    line_str: str = typer.Argument(..., help="The line being hovered"),
-    current_word: str = typer.Argument(..., help="The word being hovered"),
-    w_start: int = typer.Argument(..., help="The start index of the word being hovered"),
-    w_end: int = typer.Argument(..., help="The end index of the word being hovered"),
-):
+    line_str: str, current_word: str, w_start: int, w_end: int
+) -> tuple[str, int, int]:
+
     """
     Check if current hovered text is a section title and then return it's description
+
+    ARGUMENTS:
+    line_str (str): the current line as a string.
+    current_word (str): the current word being hovered.
+    w_start (int): The start index of the current_word.
+    w_end (int): The end index of the current_word.
+
+    RETURN:
+    hover_display (str): The string to display in the hover box.
+    w_start (int): The start index of the hover word (current_word)
+    w_end (int): The end index of the hover word (current_word)
 
     EXAMPLES:
     [training]
@@ -259,10 +288,8 @@ def section_resolver(
                 )
                 return hover_display, w_start, w_end
             else:
-                 # returns empty hover display, section start, and section end
                 return None, None, None
         else:
-            # returns empty hover display, section start, and section end
             return None, None, None
 
     except Exception as e:
