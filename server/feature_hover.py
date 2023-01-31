@@ -20,7 +20,7 @@ import typer
 # glossary for now, to be replaced with glossary.CONFIG_DESCRIPTIONS from spacy
 section_glossary = {
     "nlp": "Definition of the nlp object, its tokenizer and processing pipeline component names",
-    "components": "Definitions of the pipeline components and their models.",
+    "components": "Definitions of the pipeline components and their models. Pipeline components can be found in [nlp]",
     "paths": "Paths to data and other assets. Re-used across the config as variables, e.g. ${paths.train}, and can be overwritten on the CLI.",
     "system": "Settings related to system and hardware. Re-used across the config as variables, e.g. ${system.seed}, and can be overwritten on the CLI.",
     "training": "Settings and controls for the training and evaluation process.",
@@ -83,7 +83,7 @@ def registry_resolver(
     w_end (int): The end index of the hover word (current_word)
     """
 
-    registry_name, r_start, r_end = detect_registry_names(line_str, w_start, w_end)
+    registry_name, r_start, r_end = detect_registry_names(line_str, current_word)
     if registry_name:
         registry_type, t_start, t_end = detect_registry_type(line_str, r_start)
 
@@ -122,74 +122,37 @@ def registry_resolver(
 
 
 def detect_registry_names(
-    line: str, word_start: int, word_end: int
+    line: str, current_word: str
 ) -> tuple[str, int, int]:
     """
     Detect if a word indicates a registry name
 
     ARGUMENTS:
     line (str): the current line as a string.
-    word_start (int): The start index of the current hover word.
-    word_end (int): The end index of the current hover word.
+    current_word (str): the current word as a string.
 
     RETURN:
     full_registry_name (str): The full registry name as a string
     registry_name_start (int): The start index of the full registry name
     registry_name_end (int): The end index of the full registry name
 
-    Examples:
+    EXAMPLES:
     spacy.registry_name_.v1
     spacy-legacy.registry_name.v2
     compounding.v1
-
-    1. Case: "spacy." - A dot on the end indicates a beginning of a registry name (OPTIONAL)
-    2. Case: ".<any word>." - A word enclosed with dots indicate the registry name
-    3. Case: ".v<any number>" - A at the beginning indicates the end of a registry name
-    4. Case: "compounding.v1" Example
     """
-    registry_name_start = 0
-    registry_name_end = 0
+    # match optional first segment (i.e. spacy.), required second segement, and required third segement (i.e. ".v<any_number>")
+    registry_regex = r"([\w\d]*\.)?[\w\d]*\.v[\d]*"
+    registry_match = re.search(registry_regex, line)
 
-    # There won't exist a registry name beginning a new line
-    # Registry names are always enclosed with a quote
-    if word_start != 0 and word_end < len(line) - 1:
-        # Case 1
-        if line[word_start - 1] != "." and line[word_end + 1] == ".":
-            prefix = line[word_start : word_end + 1]
-            registry_name, r_start, r_end = get_current_word(line, word_end + 2)
-            if line[r_end + 1] == ".":
-                version, v_start, v_end = get_current_word(line, r_end + 2)
-                registry_name_start = word_start
-                registry_name_end = v_end
-            # Case 4
-            else:
-                registry_name_start = word_start
-                registry_name_end = r_end
-
-        # Case 2
-        elif line[word_start - 1] == "." and line[word_end + 1] == ".":
-            registry_name = line[word_start : word_end + 1]
-            prefix, p_start, p_end = get_current_word(line, word_start - 2)
-            version, v_start, v_end = get_current_word(line, word_end + 2)
-            registry_name_start = p_start
-            registry_name_end = v_end
-
-        # Case 3
-        elif line[word_start - 1] == "." and line[word_end + 1] != ".":
-            version = line[word_start : word_end + 1]
-            registry_name, r_start, r_end = get_current_word(line, word_start - 2)
-            if line[r_start - 1] == ".":
-                prefix, p_start, p_end = get_current_word(line, r_start - 2)
-                registry_name_start = p_start
-                registry_name_end = word_end
-
-        full_registry_name = line[registry_name_start : registry_name_end + 1]
-        registry_regex = r"[\w\d]*\.[\w\d]*(\.[\w\d]*)?"
-
-        if re.match(registry_regex, full_registry_name):
+    if registry_match != None:
+        full_registry_name = registry_match.group(0)
+        if full_registry_name.find(current_word) != -1:
+            # if actually hovering over part of the registry name, return values
+            registry_name_start = registry_match.span()[0]
+            registry_name_end = registry_match.span()[1] - 1
             return full_registry_name, registry_name_start, registry_name_end
         else:
-            # returns empty registry name, start index, and end index
             return None, None, None
     else:
         return None, None, None
