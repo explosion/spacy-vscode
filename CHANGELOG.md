@@ -10,6 +10,17 @@ We try to follow semantic versioning (semver) if possible:
 
 > Given a version number 1.2.3, 1 is the major number, 2 the minor and 3 the patch number.
 
+## [1.0.0] - 26/01/2022
+
+### Added
+- Hover feature for sections
+- Documentation and argument/return types for the functions in the hover feature
+
+### Changed
+- refactored code within the `detect_registry_names` hover feature function
+
+### Fixed
+
 ## [0.2.0] - 26/01/2022
 
 ### Added
