@@ -17,7 +17,7 @@ We try to follow semantic versioning (semver) if possible:
 - Documentation and argument/return types for the functions in the hover feature
 
 ### Changed
-- refactored code within the `detect_registry_names` hover feature function
+- Refactored code within the `detect_registry_names` hover feature function
 
 ### Fixed
 

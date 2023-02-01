@@ -16,15 +16,15 @@ from spacy import registry, schemas, glossary
 from .spacy_server import SpacyLanguageServer
 from .util import get_current_word
 
-# glossary for now, to be replaced with glossary.CONFIG_DESCRIPTIONS from spacy
+# TODO: glossary for now, to be replaced with glossary.CONFIG_DESCRIPTIONS from spacy
 section_glossary = {
-    "nlp": "Definition of the nlp object, its tokenizer and processing pipeline component names",
-    "components": "Definitions of the pipeline components and their models. Pipeline components can be found in [nlp]",
-    "paths": "Paths to data and other assets. Re-used across the config as variables, e.g. ${paths.train}, and can be overwritten on the CLI.",
-    "system": "Settings related to system and hardware. Re-used across the config as variables, e.g. ${system.seed}, and can be overwritten on the CLI.",
+    "nlp": "Definition of the `Language` object, its tokenizer and processing pipeline component names.",
+    "components": "Definitions of the pipeline components and their models. Pipeline components can be found in [nlp].",
+    "paths": "Paths to data and other assets. Re-used across the config as variables, e.g. ${paths.train}, and can be overridden by the CLI.",
+    "system": "Settings related to system and hardware. Re-used across the config as variables, e.g. ${system.seed}, and can be overridden by the CLI.",
     "training": "Settings and controls for the training and evaluation process.",
     "pretraining": "Optional settings and controls for the language model pretraining.",
-    "initialize": "Data resources and arguments passed to components when nlp.initialize is called before training (but not at runtime).",
+    "initialize": "Data resources and arguments passed to components when `nlp.initialize` is called before training (but not at inference-time).",
     "corpora": "Readers for corpora like dev and train.",
 }
 
@@ -47,12 +47,12 @@ def hover(
     hover_display, h_start, h_end = registry_resolver(
         line_str, current_word, w_start, w_end
     )
-    if hover_display == None:
+    if hover_display is None:
         hover_display, h_start, h_end = section_resolver(
             line_str, current_word, w_start, w_end
         )
 
-    if hover_display != None:
+    if hover_display is not None:
         return Hover(
             contents=MarkupContent(kind=MarkupKind.Markdown, value=hover_display),
             range=Range(
@@ -112,7 +112,7 @@ def registry_resolver(
         # registry_path = f"➡️ [Go to code]({registry_desc['file']})"
 
         # TODO Fine-Tune display message
-        hover_display = f"## ⚙️ {registry_name} \n {registry_docstring}"
+        hover_display = f"## ⚙️ {registry_name}\n{registry_docstring}"
 
         return hover_display, r_start, r_end
 
