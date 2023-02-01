@@ -17,7 +17,7 @@ from .spacy_server import SpacyLanguageServer
 from .util import get_current_word
 
 # TODO: glossary for now, to be replaced with glossary.CONFIG_DESCRIPTIONS from spacy
-section_glossary = {
+SECTION_GLOSSARY = {
     "nlp": "Definition of the `Language` object, its tokenizer and processing pipeline component names.",
     "components": "Definitions of the pipeline components and their models. Pipeline components can be found in [nlp].",
     "paths": "Paths to data and other assets. Re-used across the config as variables, e.g. ${paths.train}, and can be overridden by the CLI.",
@@ -84,12 +84,12 @@ def registry_resolver(
 
     registry_name, r_start, r_end = detect_registry_names(line_str, current_word)
     if registry_name:
-        registry_type, t_start, t_end = detect_registry_type(line_str, r_start)
+        registry_type = detect_registry_type(line_str, r_start)
 
     # Special Case for Factories
     # Because their registry_names can be "ner", "textcat"
     else:
-        registry_type, t_start, t_end = detect_registry_type(line_str, w_start)
+        registry_type = detect_registry_type(line_str, w_start)
         registry_name = current_word
         r_start = w_start
         r_end = w_end
@@ -142,7 +142,9 @@ def detect_registry_names(line: str, current_word: str) -> tuple[str, int, int]:
     registry_regex = r"([\w]*\.)?[\w]*\.v[\d]*"
     registry_match = re.search(registry_regex, line)
 
-    if registry_match != None:
+    if registry_match is None:
+        return None, None, None
+    else:
         full_registry_name = registry_match.group(0)
         if full_registry_name.find(current_word) != -1:
             # if actually hovering over part of the registry name, return values
@@ -151,8 +153,6 @@ def detect_registry_names(line: str, current_word: str) -> tuple[str, int, int]:
             return full_registry_name, registry_name_start, registry_name_end
         else:
             return None, None, None
-    else:
-        return None, None, None
 
 
 def detect_registry_type(line: str, registry_start: int) -> tuple[str, int, int]:
@@ -165,9 +165,6 @@ def detect_registry_type(line: str, registry_start: int) -> tuple[str, int, int]
 
     RETURN:
     full_registry_name (str): The full registry type as a string
-    registry_name_start (int): The start index of the registry type
-    registry_name_end (int): The end index of the registry type
-
 
     EXAMPLES:
     @architecture
@@ -187,7 +184,7 @@ def detect_registry_type(line: str, registry_start: int) -> tuple[str, int, int]
             registry_type, t_start, t_end = get_current_word(line, i)
             break
 
-    return line[t_start : t_end + 1], t_start, t_end
+    return line[t_start : t_end + 1]
 
 
 def section_resolver(
@@ -220,37 +217,34 @@ def section_resolver(
         "initialize": schemas.ConfigSchemaInit,
     }
 
-    try:
-        # match the section titles, always start with a bracket
-        if line_str[0] == "[":
-            # break section into a list of components
-            sections_list = line_str[1:-2].split(".")
-            # if the current hover word is in the dictionary of descriptions
-            if current_word in section_glossary.keys():
-                # TODO Fine-Tune display message
-                hover_display = (
-                    f"## ⚙️ {current_word} \n {section_glossary[current_word]}"
-                )
-                return hover_display, w_start, w_end
-            elif (
-                current_word == sections_list[1]
-                and sections_list[0] in config_schemas.keys()
-            ):
-                # get field title from the config schema
-                field_title = (
-                    config_schemas[sections_list[0]]
-                    .__fields__[sections_list[1]]
-                    .field_info.title
-                )
-                # TODO Fine-Tune display message
-                hover_display = (
-                    f"## ⚙️ {sections_list[0]} -> {sections_list[1]} \n {field_title}"
-                )
-                return hover_display, w_start, w_end
-            else:
-                return None, None, None
+    # match the section titles, always start with a bracket
+    if line_str[0] == "[":
+        # break section into a list of components
+        sections_list = line_str[1:-2].split(".")
+        # if the current hover word is in the dictionary of descriptions
+        if current_word in SECTION_GLOSSARY.keys():
+            # TODO Fine-Tune display message
+            hover_display = (
+                f"## ⚙️ {current_word} \n {SECTION_GLOSSARY[current_word]}"
+            )
+            return hover_display, w_start, w_end
+        elif (
+            current_word == sections_list[1]
+            and sections_list[0] in config_schemas.keys()
+        ):
+            # get field title from the config schema
+            field_title = (
+                config_schemas[sections_list[0]]
+                .__fields__[sections_list[1]]
+                .field_info.title
+            )
+            # TODO Fine-Tune display message
+            hover_display = (
+                f"## ⚙️ {sections_list[0]} -> {sections_list[1]} \n {field_title}"
+            )
+            return hover_display, w_start, w_end
         else:
             return None, None, None
-
-    except Exception as e:
+    else:
         return None, None, None
+
