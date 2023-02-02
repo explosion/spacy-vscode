@@ -10,7 +10,7 @@ We try to follow semantic versioning (semver) if possible:
 
 > Given a version number 1.2.3, 1 is the major number, 2 the minor and 3 the patch number.
 
-## [0.3.0] - 26/01/2022
+## [0.3.0] - 01/02/2023
 
 ### Added
 - Hover feature for sections
@@ -21,7 +21,7 @@ We try to follow semantic versioning (semver) if possible:
 
 ### Fixed
 
-## [0.2.0] - 26/01/2022
+## [0.2.0] - 26/01/2023
 
 ### Added
 - Python Environment Management
@@ -37,7 +37,7 @@ We try to follow semantic versioning (semver) if possible:
 ### Fixed
 
 
-## [0.1.0] - 12/01/2022
+## [0.1.0] - 12/01/2023
 
 ### Added
 - Resolving registry entries through hover display (e.g `@architecture`, `factory`, `@tokenizer`, etc.)
