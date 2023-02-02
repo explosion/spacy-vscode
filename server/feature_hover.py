@@ -14,10 +14,12 @@ import re
 from typing import Optional
 from spacy import registry, schemas, glossary
 from .spacy_server import SpacyLanguageServer
-from .util import get_current_word
+from .util import get_current_word, SpanInfo
+from dataclasses import dataclass
+from catalogue import RegistryError
 
 # TODO: glossary for now, to be replaced with glossary.CONFIG_DESCRIPTIONS from spacy
-SECTION_GLOSSARY = {
+CONFIG_DESCRIPTIONS = {
     "nlp": "Definition of the `Language` object, its tokenizer and processing pipeline component names.",
     "components": "Definitions of the pipeline components and their models. Pipeline components can be found in [nlp].",
     "paths": "Paths to data and other assets. Re-used across the config as variables, e.g. ${paths.train}, and can be overridden by the CLI.",
@@ -27,6 +29,13 @@ SECTION_GLOSSARY = {
     "initialize": "Data resources and arguments passed to components when `nlp.initialize` is called before training (but not at inference-time).",
     "corpora": "Readers for corpora like dev and train.",
 }
+
+
+@dataclass
+class HoverInfo:
+    display_string: str  # Can have markdown elements
+    start: int  # Start index of the source string
+    end: int  # End index of the source string
 
 
 def hover(
@@ -42,22 +51,24 @@ def hover(
 
     line_n = params.position.line
     line_str = document.lines[line_n]
-    current_word, w_start, w_end = get_current_word(line_str, params.position.character)
+    current_span = get_current_word(line_str, params.position.character)
 
-    hover_display, h_start, h_end = registry_resolver(
-        line_str, current_word, w_start, w_end
+    hover_object = registry_resolver(
+        line_str, current_span.span_string, current_span.start, current_span.end
     )
-    if hover_display is None:
-        hover_display, h_start, h_end = section_resolver(
-            line_str, current_word, w_start, w_end
+    if hover_object is None:
+        hover_object = section_resolver(
+            line_str, current_span.span_string, current_span.start, current_span.end
         )
 
-    if hover_display is not None:
+    if hover_object is not None:
         return Hover(
-            contents=MarkupContent(kind=MarkupKind.Markdown, value=hover_display),
+            contents=MarkupContent(
+                kind=MarkupKind.Markdown, value=hover_object.display_string
+            ),
             range=Range(
-                start=Position(line=line_n, character=h_start),
-                end=Position(line=line_n, character=h_end + 1),
+                start=Position(line=line_n, character=hover_object.start),
+                end=Position(line=line_n, character=hover_object.end + 1),
             ),
         )
     else:
@@ -66,7 +77,7 @@ def hover(
 
 def registry_resolver(
     line_str: str, current_word: str, w_start: int, w_end: int
-) -> tuple[str, int, int]:
+) -> Optional[HoverInfo]:
     """
     Check if currently hovered text is registered in the spaCy registry and return its description.
 
@@ -75,63 +86,54 @@ def registry_resolver(
     current_word (str): the current word being hovered.
     w_start (int): The start index of the current_word.
     w_end (int): The end index of the current_word.
-
-    RETURN:
-    hover_display (str): The string to display in the hover box.
-    w_start (int): The start index of the hover word (current_word)
-    w_end (int): The end index of the hover word (current_word)
     """
 
-    registry_name, r_start, r_end = detect_registry_names(line_str, current_word)
-    if registry_name:
-        registry_type = detect_registry_type(line_str, r_start)
+    registry_span = detect_registry_func(line_str, current_word)
+    if registry_span:
+        registry_func = registry_span.span_string
+        r_start = registry_span.start
+        r_end = registry_span.end
+        registry_name = detect_registry_name(line_str, r_start)
 
     # Special Case for Factories
     # Because their registry_names can be "ner", "textcat"
-    else:
-        registry_type = detect_registry_type(line_str, w_start)
-        registry_name = current_word
+    elif line_str.find("factory") != -1:
+        registry_func = current_word
         r_start = w_start
         r_end = w_end
-
-    # Hardcoded renaming
-    if registry_type == "factory":
-        registry_type = "factories"
+        registry_name = "factories"
+    else:
+        return None
 
     try:
         # Retrieve data from registry
-        registry_desc = registry.find(registry_type, registry_name)
+        registry_desc = registry.find(registry_name, registry_func)
 
-        if not registry_desc["docstring"]:
-            registry_docstring = "Currently no description available"
-        else:
-            registry_docstring = registry_desc["docstring"]
+    except RegistryError as e:
+        return None
 
-        # TODO Create link to codebase (if possible)
-        # if registry_desc["file"] is not None:
-        # registry_path = f"➡️ [Go to code]({registry_desc['file']})"
+    if not registry_desc["docstring"]:
+        registry_docstring = "Currently no description available"
+    else:
+        registry_docstring = registry_desc["docstring"]
 
-        # TODO Fine-Tune display message
-        hover_display = f"## ⚙️ {registry_name}\n{registry_docstring}"
+    # TODO Create link to codebase (if possible)
+    # if registry_desc["file"] is not None:
+    # registry_path = f"➡️ [Go to code]({registry_desc['file']})"
 
-        return hover_display, r_start, r_end
+    # TODO Fine-Tune display message
+    hover_display = f"## ⚙️ {registry_func}\n{registry_docstring}"
 
-    except Exception as e:
-        return None, None, None
+    return HoverInfo(hover_display, r_start, r_end)
 
 
-def detect_registry_names(line: str, current_word: str) -> tuple[str, int, int]:
+def detect_registry_func(line: str, current_word: str) -> Optional[SpanInfo]:
     """
     Detect if a word indicates a registry name
 
     ARGUMENTS:
     line (str): the current line as a string.
     current_word (str): the current word as a string.
-
-    RETURN:
-    full_registry_name (str): The full registry name as a string
-    registry_name_start (int): The start index of the full registry name
-    registry_name_end (int): The end index of the full registry name
 
     EXAMPLES:
     spacy.registry_name_.v1
@@ -143,19 +145,19 @@ def detect_registry_names(line: str, current_word: str) -> tuple[str, int, int]:
     registry_match = re.search(registry_regex, line)
 
     if registry_match is None:
-        return None, None, None
+        return None
     else:
-        full_registry_name = registry_match.group(0)
-        if full_registry_name.find(current_word) != -1:
+        full_registry_func = registry_match.group(0)
+        if full_registry_func.find(current_word) != -1:
             # if actually hovering over part of the registry name, return values
-            registry_name_start = registry_match.span()[0]
-            registry_name_end = registry_match.span()[1] - 1
-            return full_registry_name, registry_name_start, registry_name_end
+            registry_func_start = registry_match.span()[0]
+            registry_func_end = registry_match.span()[1] - 1
+            return SpanInfo(full_registry_func, registry_func_start, registry_func_end)
         else:
-            return None, None, None
+            return None
 
 
-def detect_registry_type(line: str, registry_start: int) -> tuple[str, int, int]:
+def detect_registry_name(line: str, registry_start: int) -> str:
     """
     Detect type and return type and name of registry
 
@@ -164,32 +166,26 @@ def detect_registry_type(line: str, registry_start: int) -> tuple[str, int, int]
     registry_start (int): The start index of the current hover word.
 
     RETURN:
-    full_registry_name (str): The full registry type as a string
+    full_registry_func (str): The full registry function as a string
 
-    EXAMPLES:
+    EXAMPLE:
     @architecture
-    factory
     """
 
-    t_start = 0
-    t_end = 0
-
     if registry_start <= 0:
-        return "", t_start, t_end
+        return ""
 
     for i in range(registry_start - 1, 0, -1):
         if re.match("\W", line[i]):
             continue
         else:
-            registry_type, t_start, t_end = get_current_word(line, i)
-            break
-
-    return line[t_start : t_end + 1]
+            type_span = get_current_word(line, i)
+            return type_span.span_string
 
 
 def section_resolver(
     line_str: str, current_word: str, w_start: int, w_end: int
-) -> tuple[str, int, int]:
+) -> Optional[HoverInfo]:
 
     """
     Check if current hovered text is a section title and then return it's description
@@ -199,11 +195,6 @@ def section_resolver(
     current_word (str): the current word being hovered.
     w_start (int): The start index of the current_word.
     w_end (int): The end index of the current_word.
-
-    RETURN:
-    hover_display (str): The string to display in the hover box.
-    w_start (int): The start index of the hover word (current_word)
-    w_end (int): The end index of the hover word (current_word)
 
     EXAMPLES:
     [training]
@@ -222,12 +213,10 @@ def section_resolver(
         # break section into a list of components
         sections_list = line_str[1:-2].split(".")
         # if the current hover word is in the dictionary of descriptions
-        if current_word in SECTION_GLOSSARY.keys():
+        if current_word in CONFIG_DESCRIPTIONS.keys():
             # TODO Fine-Tune display message
-            hover_display = (
-                f"## ⚙️ {current_word} \n {SECTION_GLOSSARY[current_word]}"
-            )
-            return hover_display, w_start, w_end
+            hover_display = f"## ⚙️ {current_word}\n{CONFIG_DESCRIPTIONS[current_word]}"
+            return HoverInfo(hover_display, w_start, w_end)
         elif (
             current_word == sections_list[1]
             and sections_list[0] in config_schemas.keys()
@@ -240,11 +229,10 @@ def section_resolver(
             )
             # TODO Fine-Tune display message
             hover_display = (
-                f"## ⚙️ {sections_list[0]} -> {sections_list[1]} \n {field_title}"
+                f"## ⚙️ {sections_list[0]} -> {sections_list[1]}\n{field_title}"
             )
-            return hover_display, w_start, w_end
+            return HoverInfo(hover_display, w_start, w_end)
         else:
-            return None, None, None
+            return None
     else:
-        return None, None, None
-
+        return None

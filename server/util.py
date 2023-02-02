@@ -1,9 +1,17 @@
 """Script for utility functions that can be used across the other implementations"""
 
 import re
+from dataclasses import dataclass
 
 
-def get_current_word(line: str, start_pos: int):
+@dataclass
+class SpanInfo:
+    span_string: str  # The span text
+    start: int  # Start index of the string
+    end: int  # End index of the string
+
+
+def get_current_word(line: str, start_pos: int) -> SpanInfo:
     """
     Returns the a span string seperated by non-word characters
 
@@ -31,4 +39,4 @@ def get_current_word(line: str, start_pos: int):
         else:
             start_i = i
 
-    return line[start_i : end_i + 1], start_i, end_i
+    return SpanInfo(line[start_i : end_i + 1], start_i, end_i)
