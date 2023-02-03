@@ -130,6 +130,8 @@ def detect_registry_func(
     ARGUMENTS:
     line (str): the current line as a string.
     current_word (str): the current word as a string.
+    w_start (int): The start index of the current_word.
+    w_end (int): The end index of the current_word.
 
     EXAMPLES:
     spacy.registry_name_.v1
