@@ -88,22 +88,17 @@ def registry_resolver(
     w_end (int): The end index of the current_word.
     """
 
-    registry_span = detect_registry_func(line_str, current_word)
+    registry_span = detect_registry_func(line_str, current_word, w_start, w_end)
     if registry_span:
         registry_func = registry_span.span_string
         r_start = registry_span.start
         r_end = registry_span.end
         registry_name = detect_registry_name(line_str, r_start)
-
-    # Special Case for Factories
-    # Because their registry_names can be "ner", "textcat"
-    elif line_str.find("factory") != -1:
-        registry_func = current_word
-        r_start = w_start
-        r_end = w_end
-        registry_name = "factories"
     else:
         return None
+
+    if registry_name == "factory":
+        registry_name = "factories"
 
     try:
         # Retrieve data from registry
@@ -112,7 +107,9 @@ def registry_resolver(
     except RegistryError as e:
         return None
 
-    registry_docstring = registry_desc.get("docstring", "Currently no description available")
+    registry_docstring = registry_desc.get(
+        "docstring", "Currently no description available"
+    )
 
     # TODO Create link to codebase (if possible)
     # if registry_desc["file"] is not None:
@@ -124,7 +121,9 @@ def registry_resolver(
     return HoverInfo(hover_display, r_start, r_end)
 
 
-def detect_registry_func(line: str, current_word: str) -> Optional[SpanInfo]:
+def detect_registry_func(
+    line: str, current_word: str, w_start: int, w_end: int
+) -> Optional[SpanInfo]:
     """
     Detect if a word indicates a registry name
 
@@ -136,22 +135,29 @@ def detect_registry_func(line: str, current_word: str) -> Optional[SpanInfo]:
     spacy.registry_name_.v1
     spacy-legacy.registry_name.v2
     compounding.v1
+    textcat
     """
+
+    # Special Case for Factories
+    # Because their registry_names can be "ner", "textcat"
+    if "factory" in line:
+        return SpanInfo(current_word, w_start, w_end)
+
     # match optional first segment (i.e. <letters and underscores>.), required second segment and version (i.e. "<letters and underscores>.v<any_numbers>")
     registry_regex = r"([\w]*\.)?[\w]*\.v[\d]*"
     registry_match = re.search(registry_regex, line)
 
     if registry_match is None:
         return None
+
+    full_registry_func = registry_match.group(0)
+    if current_word in full_registry_func:
+        # if actually hovering over part of the registry name, return values
+        registry_func_start = registry_match.span()[0]
+        registry_func_end = registry_match.span()[1] - 1
+        return SpanInfo(full_registry_func, registry_func_start, registry_func_end)
     else:
-        full_registry_func = registry_match.group(0)
-        if current_word in full_registry_func:
-            # if actually hovering over part of the registry name, return values
-            registry_func_start = registry_match.span()[0]
-            registry_func_end = registry_match.span()[1] - 1
-            return SpanInfo(full_registry_func, registry_func_start, registry_func_end)
-        else:
-            return None
+        return None
 
 
 def detect_registry_name(line: str, registry_start: int) -> str:
@@ -206,7 +212,9 @@ def section_resolver(
     }
 
     # match the section titles, always start with a bracket
-    if line_str[0] == "[":
+    if line_str[0] != "[":
+        return None
+    else:
         # break section into a list of components
         sections_list = line_str[1:-2].split(".")
         # if the current hover word is in the dictionary of descriptions
@@ -231,5 +239,3 @@ def section_resolver(
             return HoverInfo(hover_display, w_start, w_end)
         else:
             return None
-    else:
-        return None
