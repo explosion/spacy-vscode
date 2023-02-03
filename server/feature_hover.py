@@ -112,10 +112,7 @@ def registry_resolver(
     except RegistryError as e:
         return None
 
-    if not registry_desc["docstring"]:
-        registry_docstring = "Currently no description available"
-    else:
-        registry_docstring = registry_desc["docstring"]
+    registry_docstring = registry_desc.get("docstring", "Currently no description available")
 
     # TODO Create link to codebase (if possible)
     # if registry_desc["file"] is not None:
@@ -148,7 +145,7 @@ def detect_registry_func(line: str, current_word: str) -> Optional[SpanInfo]:
         return None
     else:
         full_registry_func = registry_match.group(0)
-        if full_registry_func.find(current_word) != -1:
+        if current_word in full_registry_func:
             # if actually hovering over part of the registry name, return values
             registry_func_start = registry_match.span()[0]
             registry_func_end = registry_match.span()[1] - 1
