@@ -107,8 +107,8 @@ def registry_resolver(
     except RegistryError as e:
         return None
 
-    registry_docstring = registry_desc.get(
-        "docstring", "Currently no description available"
+    registry_docstring = (
+        registry_desc.get("docstring") or "Currently no description available"
     )
 
     # TODO Create link to codebase (if possible)
