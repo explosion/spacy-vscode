@@ -213,8 +213,8 @@ def section_resolver(
         "initialize": schemas.ConfigSchemaInit,
     }
 
-    # match the section titles, always start with a bracket
-    if line_str[0] != "[":
+    # match the section titles, always start with a bracket and more than 1 character
+    if line_str[0] != "[" or len(current_word) <= 1:
         return None
     else:
         # break section into a list of components
