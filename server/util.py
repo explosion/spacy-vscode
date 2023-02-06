@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 @dataclass
 class SpanInfo:
-    span_string: str  # The span text
+    span_string: str  # The span text, can have markdown elements
     start: int  # Start index of the string
     end: int  # End index of the string
 
