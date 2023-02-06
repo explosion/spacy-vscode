@@ -10,10 +10,12 @@ We try to follow semantic versioning (semver) if possible:
 
 > Given a version number 1.2.3, 1 is the major number, 2 the minor and 3 the patch number.
 
-## [1.0.0] - 30/01/2022
+## [0.3.0] - 01/02/2023
 
 ### Added
 
+- Hover feature for sections
+- Documentation and argument/return types for the functions in the hover feature
 - Python Environment Management
   - Added checks if python modules fulfill version range
   - Added checks if `Python Extension` is enabled/installed
@@ -21,9 +23,12 @@ We try to follow semantic versioning (semver) if possible:
 
 ### Changed
 
+- Refactored code within the `detect_registry_names` hover feature function
 - Changed logging to `LogOutputChannel`
 
-## [0.2.0] - 26/01/2022
+### Fixed
+
+## [0.2.0] - 26/01/2023
 
 ### Added
 
@@ -38,7 +43,7 @@ We try to follow semantic versioning (semver) if possible:
 
 - Increased version node modules (e.g. `vscode-languageclient`)
 
-## [0.1.0] - 12/01/2022
+## [0.1.0] - 12/01/2023
 
 ### Added
 
