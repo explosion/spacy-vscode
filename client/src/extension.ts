@@ -23,6 +23,13 @@ const fs = require("fs");
 // Server
 let client: LanguageClient;
 
+import { platform } from 'node:process';
+
+let pythonPathSuffix = "/bin/python"
+if(platform == "win32"){
+  pythonPathSuffix = "/Scripts/python.exe"
+}
+
 // Status Logging
 let logging: vscode.LogOutputChannel;
 let statusBar: vscode.StatusBarItem;
@@ -132,7 +139,7 @@ async function showServerStatus() {
       openLabel: "Select python interpreter",
     });
     if (uris) {
-      pythonPath = uris[0].fsPath + "/bin/python";
+      pythonPath = uris[0].fsPath + pythonPathSuffix;
     }
   } else if (selection == option_2) {
     // Select current python interpreter
@@ -174,7 +181,7 @@ async function verifyPythonEnvironment(pythonPath: string): Promise<boolean> {
    * @returns Promise<Boolean>
    */
   if (fs.existsSync(pythonPath)) {
-    return await importPythonCommand(pythonPath + " -c " + python_import);
+    return await importPythonCommand(pythonPath + " -c " + '"' + python_import + '"');
   }
   return new Promise((resolve, reject) => {
     logging.error("Selected python interpreter does not exist: " + pythonPath);
@@ -285,7 +292,7 @@ export async function activate(context: ExtensionContext) {
     // Development - Run the server manually
     let settings = require("../../.vscode/settings.json");
     currentPythonEnvironment =
-      settings["python.defaultInterpreterPath"] + "/bin/python";
+      settings["python.defaultInterpreterPath"] + pythonPathSuffix;
   } else {
     // Production - Client is going to run the server (for use within `.vsix` package)
     currentPythonEnvironment = workspace
