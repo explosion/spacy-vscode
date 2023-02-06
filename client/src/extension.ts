@@ -75,10 +75,6 @@ async function startProduction() {
    * @returns LanguageClient
    */
   const cwd = path.join(__dirname, "..", "..");
-
-  if (currentPythonEnvironment == "") {
-    showServerStatus();
-  }
   // Check whether active python environment has all modules installed (pygls, spacy)
   let pythonEnvVerified = await verifyPythonEnvironment(
     currentPythonEnvironment
@@ -89,6 +85,8 @@ async function startProduction() {
       ["-m", "server"],
       cwd
     );
+  } else {
+    showServerStatus();
   }
 }
 
@@ -119,7 +117,7 @@ async function showServerStatus() {
 
   if (clientActive) {
     message = "spaCy extension active on " + currentPythonEnvironment;
-  } else if (currentPythonEnvironment == "") {
+  } else {
     message = "Please select a python interpreter";
   }
 
@@ -289,18 +287,18 @@ export async function activate(context: ExtensionContext) {
 
   // Start Client
   if (context.extensionMode === ExtensionMode.Development) {
-    // Development - Run the server manually
+    // Development
     let settings = require("../../.vscode/settings.json");
     currentPythonEnvironment =
       settings["python.defaultInterpreterPath"] + pythonPathSuffix;
   } else {
-    // Production - Client is going to run the server (for use within `.vsix` package)
+    // Production
     currentPythonEnvironment = workspace
       .getConfiguration("spacy-extension")
       .get("defaultPythonInterpreter");
-    setPythonEnvironment(currentPythonEnvironment);
   }
 
+  setPythonEnvironment(currentPythonEnvironment);
   client = await startProduction();
 
   if (client) {
