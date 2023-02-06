@@ -23,11 +23,11 @@ const fs = require("fs");
 // Server
 let client: LanguageClient;
 
-import { platform } from 'node:process';
+import { platform } from "node:process";
 
-let pythonPathSuffix = "/bin/python"
-if(platform == "win32"){
-  pythonPathSuffix = "/Scripts/python.exe"
+let pythonPathSuffix = "/bin/python";
+if (platform == "win32") {
+  pythonPathSuffix = "/Scripts/python.exe";
 }
 
 // Status Logging
@@ -165,6 +165,9 @@ async function setPythonEnvironment(pythonPath: string) {
   if (env_compatible) {
     logging.info("Interpreter compatible: " + pythonPath);
     currentPythonEnvironment = pythonPath;
+    workspace
+      .getConfiguration("spacy-extension")
+      .update("pythonInterpreter", currentPythonEnvironment);
     return true;
   } else {
     logging.warn("Interpreter not compatible: " + pythonPath);
@@ -179,7 +182,9 @@ async function verifyPythonEnvironment(pythonPath: string): Promise<boolean> {
    * @returns Promise<Boolean>
    */
   if (fs.existsSync(pythonPath)) {
-    return await importPythonCommand(pythonPath + " -c " + '"' + python_import + '"');
+    return await importPythonCommand(
+      pythonPath + " -c " + '"' + python_import + '"'
+    );
   }
   return new Promise((resolve, reject) => {
     logging.error("Selected python interpreter does not exist: " + pythonPath);
@@ -295,7 +300,7 @@ export async function activate(context: ExtensionContext) {
     // Production
     currentPythonEnvironment = workspace
       .getConfiguration("spacy-extension")
-      .get("defaultPythonInterpreter");
+      .get("pythonInterpreter");
   }
 
   setPythonEnvironment(currentPythonEnvironment);
