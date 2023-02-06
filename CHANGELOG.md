@@ -20,11 +20,14 @@ We try to follow semantic versioning (semver) if possible:
   - Added checks if python modules fulfill version range
   - Added checks if `Python Extension` is enabled/installed
 - Added `compare-versions` module
+- `client_constants`
 
 ### Changed
 
 - Refactored code within the `detect_registry_names` hover feature function
 - Changed logging to `LogOutputChannel`
+- Removed automated python interpreter selection
+- Added options to select specific interpreter or currently selected interpreter via dialog
 
 ### Fixed
 
