@@ -216,28 +216,23 @@ def section_resolver(
     # match the section titles, always start with a bracket and more than 1 character
     if line_str[0] != "[" or len(current_word) <= 1:
         return None
+
+    # break section into a list of components
+    sections_list = line_str[1:-2].split(".")
+    # if the current hover word is in the dictionary of descriptions
+    if current_word in CONFIG_DESCRIPTIONS.keys():
+        # TODO Fine-Tune display message
+        hover_display = f"## ⚙️ {current_word}\n{CONFIG_DESCRIPTIONS[current_word]}"
+        return HoverInfo(hover_display, w_start, w_end)
+    elif current_word == sections_list[1] and sections_list[0] in config_schemas.keys():
+        # get field title from the config schema
+        field_title = (
+            config_schemas[sections_list[0]]
+            .__fields__[sections_list[1]]
+            .field_info.title
+        )
+        # TODO Fine-Tune display message
+        hover_display = f"## ⚙️ {sections_list[0]} -> {sections_list[1]}\n{field_title}"
+        return HoverInfo(hover_display, w_start, w_end)
     else:
-        # break section into a list of components
-        sections_list = line_str[1:-2].split(".")
-        # if the current hover word is in the dictionary of descriptions
-        if current_word in CONFIG_DESCRIPTIONS.keys():
-            # TODO Fine-Tune display message
-            hover_display = f"## ⚙️ {current_word}\n{CONFIG_DESCRIPTIONS[current_word]}"
-            return HoverInfo(hover_display, w_start, w_end)
-        elif (
-            current_word == sections_list[1]
-            and sections_list[0] in config_schemas.keys()
-        ):
-            # get field title from the config schema
-            field_title = (
-                config_schemas[sections_list[0]]
-                .__fields__[sections_list[1]]
-                .field_info.title
-            )
-            # TODO Fine-Tune display message
-            hover_display = (
-                f"## ⚙️ {sections_list[0]} -> {sections_list[1]}\n{field_title}"
-            )
-            return HoverInfo(hover_display, w_start, w_end)
-        else:
-            return None
+        return None
