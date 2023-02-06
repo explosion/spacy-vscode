@@ -20,10 +20,6 @@
   ],
   "contributes": {
     "commands": [
-      {
-        "command": "spacy_test",
-        "title": "spaCy Test"
-      }
     ],
     "configuration": {
       "title": "spaCy Server Configuration",
