@@ -45,30 +45,6 @@ const clientOptions: LanguageClientOptions = {
 };
 
 // Server Functionality
-function startLangServerTCP(port: number): LanguageClient {
-  /**
-   * Start the client server on TCP, only works if you start the python server seperately (Only for development)
-   * @param port - Port number to which the client server listens to
-   */
-  const serverOptions: ServerOptions = () => {
-    return new Promise((resolve /*, reject */) => {
-      const clientSocket = new net.Socket();
-      clientSocket.connect(port, "127.0.0.1", () => {
-        resolve({
-          reader: clientSocket,
-          writer: clientSocket,
-        });
-      });
-    });
-  };
-
-  return new LanguageClient(
-    `tcp lang server (port ${port})`,
-    serverOptions,
-    clientOptions
-  );
-}
-
 function startLangServer(
   command: string,
   args: string[],
@@ -126,8 +102,8 @@ async function restartClient() {
 async function showServerStatus() {
   // Return current status of the server and enable user to select new interpreter
   const options: vscode.MessageOptions = { detail: "", modal: false };
-  const option_1 = "Select Interpreter";
-  const option_2 = "Select Current Interpreter";
+  const option_1 = "Select interpreter";
+  const option_2 = "Select current interpreter";
 
   let message: string;
   let selection: string;
@@ -135,9 +111,9 @@ async function showServerStatus() {
   let cwd = path.join(__dirname, "..", "..");
 
   if (clientActive) {
-    message = "spaCy Extension Active On " + currentPythonEnvironment;
+    message = "spaCy extension active on " + currentPythonEnvironment;
   } else if (currentPythonEnvironment == "") {
-    message = "Please Select A Python Interpreter";
+    message = "Please select a python interpreter";
   }
 
   selection = await vscode.window.showInformationMessage(
@@ -150,13 +126,13 @@ async function showServerStatus() {
     // Select python interpreter from file system
     let uris = await vscode.window.showOpenDialog({
       filters: {},
-      canSelectFiles: true,
-      canSelectFolders: false,
+      canSelectFiles: false,
+      canSelectFolders: true,
       canSelectMany: false,
       openLabel: "Select python interpreter",
     });
     if (uris) {
-      pythonPath = uris[0].fsPath;
+      pythonPath = uris[0].fsPath + "/bin/python";
     }
   } else if (selection == option_2) {
     // Select current python interpreter
@@ -307,15 +283,18 @@ export async function activate(context: ExtensionContext) {
   // Start Client
   if (context.extensionMode === ExtensionMode.Development) {
     // Development - Run the server manually
-    client = startLangServerTCP(2087);
+    let settings = require("../../.vscode/settings.json");
+    currentPythonEnvironment =
+      settings["python.defaultInterpreterPath"] + "/bin/python";
   } else {
     // Production - Client is going to run the server (for use within `.vsix` package)
     currentPythonEnvironment = workspace
       .getConfiguration("spacy-extension")
       .get("defaultPythonInterpreter");
     setPythonEnvironment(currentPythonEnvironment);
-    client = await startProduction();
   }
+
+  client = await startProduction();
 
   if (client) {
     await client.start();

@@ -16,7 +16,7 @@
     "ms-python.python"
   ],
   "activationEvents": [
-    "workspaceContains:*.cfg"
+    "workspaceContains:**/*.cfg"
   ],
   "contributes": {
     "commands": [
@@ -28,7 +28,7 @@
           "scope": "resource",
           "type": "string",
           "default": "",
-          "description": "Specify which Python Interpreter should be used to start the spaCy Extension Server. Please make sure that the selected environment contains all required modules (pygls, spacy)."
+          "description": "Specify python interpreter to start the spaCy extension server. Make sure it contains all required modules."
         }
       }
     }
