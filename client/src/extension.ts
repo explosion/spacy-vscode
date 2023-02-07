@@ -161,6 +161,15 @@ async function showServerStatus() {
 
 // Python Functionality
 async function setPythonEnvironment(pythonPath: string) {
+  /**
+   * Verify python environment and set it as currentPythonEnvironment and make it persistent
+   * @param pythonPath - Path to the interpreter
+   * @returns boolean - Whether the verification succeeded or failed
+   */
+  if (!fs.existsSync(pythonPath)) {
+    logging.error("Selected python interpreter does not exist: " + pythonPath);
+    return false;
+  }
   let env_compatible = await verifyPythonEnvironment(pythonPath);
   if (env_compatible) {
     logging.info("Interpreter compatible: " + pythonPath);
@@ -181,15 +190,9 @@ async function verifyPythonEnvironment(pythonPath: string): Promise<boolean> {
    * @param pythonPath - Path to the python environment
    * @returns Promise<Boolean>
    */
-  if (fs.existsSync(pythonPath)) {
-    return await importPythonCommand(
-      pythonPath + " -c " + '"' + python_import + '"'
-    );
-  }
-  return new Promise((resolve, reject) => {
-    logging.error("Selected python interpreter does not exist: " + pythonPath);
-    resolve(false);
-  });
+  return await importPythonCommand(
+    pythonPath + " -c " + '"' + python_import + '"'
+  );
 }
 
 function importPythonCommand(cmd): Promise<boolean> {

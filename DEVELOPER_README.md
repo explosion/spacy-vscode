@@ -22,7 +22,7 @@ Make sure you have `Node >= 18.6.0` installed and use `npm install` to install a
 
 > You can also use `pip install -r requirement.txt`.
 
-Create the file `setting.json` in the `.vscode/` folder and add the following line `"python.defaultInterpreterPath": "<Path to your python environment>"`. This makes sure that VScode uses your specified python environment when developing and testing the extension.
+Create the file `setting.json` in the `.vscode/` folder and add the following line `"python.defaultInterpreterPath": "<Path to your python environment folder>"`. This makes sure that VScode uses your specified python environment when developing and testing the extension.
 
 ## How to run the extension (Development)
 
