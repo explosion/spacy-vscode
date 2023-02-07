@@ -111,9 +111,9 @@ def registry_resolver(
     # get link to the GitHub code for the registry
     registry_link = ""
     if registry_desc["file"]:
-        registry_path = registry_desc["file"].split("site-packages")[-1]
+        registry_path = registry_desc["file"]
         line_no = registry_desc["line_no"]
-        registry_link = f"[Go to code](https://github.com/explosion/spaCy/blob/master{registry_path}#L{line_no})"
+        registry_link = f"[Go to code]({registry_path}#L{line_no})"
 
     # find registry description or return no description
     registry_docstring = (
