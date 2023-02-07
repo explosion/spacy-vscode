@@ -56,8 +56,8 @@ def hover(
         hover_object = section_resolver(
             line_str, current_span.span_string, current_span.start, current_span.end
         )
-        if hover_object is None:
-            hover_object = variable_resolver(line_str, config_dict)
+    if hover_object is None:
+        hover_object = variable_resolver(line_str, config_dict)
 
     if hover_object is not None:
         return Hover(
