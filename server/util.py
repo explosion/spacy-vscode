@@ -40,3 +40,41 @@ def get_current_word(line: str, start_pos: int) -> SpanInfo:
             start_i = i
 
     return SpanInfo(line[start_i : end_i + 1], start_i, end_i)
+
+
+def format_docstrings(docstring: str):
+    """
+    Formats the docstring into compatible Markdown for hover display
+    """
+
+    if docstring.split("\n\n")[-1].count(":") > 1:
+        # some docstrings have different formatting than others
+        if "\n       " in docstring:
+            registry_arguments = (
+                docstring.split("\n\n")[-1][:-2]
+                .replace("\n       ", "")
+                .replace("\n   ", "\n\n - ")
+            )
+            registry_info = (
+                "\n\n".join(docstring.split("\n\n")[:-2])
+                .replace("\n   ", "")
+                .replace("\n", "\n\n")
+            )
+
+            formatted_docstring = (
+                f"{registry_info}\n#### Arguments:\n\n - {registry_arguments}"
+            )
+        else:
+            registry_arguments = (
+                docstring.split("\n\n")[-1]
+                .replace("\n   ", "")
+                .replace("\n", "\n\n - ")
+            )
+            registry_info = "\n\n".join(docstring.split("\n\n")[:-1])
+            formatted_docstring = (
+                f"{registry_info}\n#### Arguments:\n\n - {registry_arguments}"
+            )
+    else:
+        formatted_docstring = docstring
+
+    return formatted_docstring

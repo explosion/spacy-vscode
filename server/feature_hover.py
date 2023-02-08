@@ -14,7 +14,7 @@ import re
 from typing import Optional
 from spacy import registry, schemas, glossary
 from .spacy_server import SpacyLanguageServer
-from .util import get_current_word, SpanInfo
+from .util import get_current_word, SpanInfo, format_docstrings
 from dataclasses import dataclass
 from catalogue import RegistryError
 
@@ -121,32 +121,11 @@ def registry_resolver(
     )
 
     # Fix the formatting of docstrings for display in hover
-    if registry_docstring.split("\n\n")[-1].count(":") > 1:
-        # factories have different formatting than other registry functions
-        if registry_name == "factories":
-            registry_arguments = (
-                registry_docstring.split("\n\n")[-1][:-2]
-                .replace("\n       ", "")
-                .replace("\n   ", "\n\n - ")
-            )
-            registry_info = (
-                "\n\n".join(registry_docstring.split("\n\n")[:-2])
-                .replace("\n   ", "")
-                .replace("\n", "\n\n")
-            )
+    formatted_docstring = format_docstrings(registry_docstring)
 
-            hover_display = f"### (*registry*) {registry_func}\n\n{registry_link}\n\n{registry_info}\n#### Arguments:\n\n - {registry_arguments}"
-        else:
-            registry_arguments = (
-                registry_docstring.split("\n\n")[-1]
-                .replace("\n   ", "")
-                .replace("\n", "\n\n - ")
-            )
-            registry_info = "\n\n".join(registry_docstring.split("\n\n")[:-1])
-            hover_display = f"### (*registry*) {registry_func}\n\n{registry_link}\n\n{registry_info}\n#### Arguments:\n\n - {registry_arguments}"
-    else:
-        hover_display = f"### (*registry*) {registry_func}\n\n{registry_link}\n\n{registry_docstring}"
-
+    hover_display = (
+        f"### (*registry*) {registry_func}\n\n{registry_link}\n\n{formatted_docstring}"
+    )
     return SpanInfo(hover_display, r_start, r_end)
 
 
