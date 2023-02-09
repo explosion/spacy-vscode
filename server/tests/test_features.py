@@ -222,3 +222,35 @@ def test_resolve_sections(line, character, section_name):
     )
     hover_obj = hover_feature(server, params)
     assert section_name in hover_obj.contents.value
+
+
+# Test formatting of docstrings
+@pytest.mark.parametrize(
+    "line, character, docstring",
+    [
+        (
+            19,
+            36,
+            "Registered function to create a tokenizer. Returns a factory that takes\nthe nlp object and returns a Tokenizer instance using the language detaults.",
+        ),
+        (
+            24,
+            13,
+            "make_ner(nlp: Language, name: str, model: Model, moves: Optional[TransitionSystem], update_with_oracle_cut_size: int, incorrect_spans_key: Optional[str], scorer: Optional[Callable])\n\nCreate a transition-based EntityRecognizer component. The entity recognizer identifies non-overlapping labelled spans of tokens.\n#### Arguments:\n\n -     model (Model): The model for the transition-based parser. The model needs to have a specific substructure of named components --- see the spacy.ml.tb_framework.TransitionModel for details.\n\n -  moves (Optional[TransitionSystem]): This defines how the parse-state is created, updated and evaluated. If 'moves' is None, a new instance is created with `self.TransitionSystem()`. Defaults to `None`.\n\n -  update_with_oracle_cut_size (int): During training, cut long sequences into shorter segments by creating intermediate states based on the gold-standard history. The model is not very sensitive to this parameter, so you usually won't need to change it. 100 is a good default.\n\n -  incorrect_spans_key (Optional[str]): Identifies spans that are known to be incorrect entity annotations. The incorrect entity annotations can be stored in the span group, under this key.\n\n -  scorer (Optional[Callable]): The scoring method.\n  ",
+        ),
+        (43, 14, "Currently no description available"),
+        (
+            49,
+            32,
+            "Construct an embedding layer that separately embeds a number of lexical\nattributes using hash embedding, concatenates the results, and passes it\nthrough a feed-forward subnetwork to build a mixed representation.\n\nThe features used can be configured with the 'attrs' argument. The suggested\nattributes are NORM, PREFIX, SUFFIX and SHAPE. This lets the model take into\naccount some subword information, without constructing a fully character-based\nrepresentation. If pretrained vectors are available, they can be included in\nthe representation as well, with the vectors table kept static\n(i.e. it's not updated).\n\nThe `width` parameter specifies the output width of the layer and the widths\nof all embedding tables. If static vectors are included, a learned linear\nlayer is used to map the vectors to the specified width before concatenating\nit with the other embedding outputs. A single Maxout layer is then used to\nreduce the concatenated vectors to the final width.\n\nThe `rows` parameter controls the number of rows used by the `HashEmbed`\ntables. The HashEmbed layer needs surprisingly few rows, due to its use of\nthe hashing trick. Generally between 2000 and 10000 rows is sufficient,\neven for very large vocabularies. A number of rows must be specified for each\ntable, so the `rows` list must be of the same length as the `attrs` parameter.\n#### Arguments:\n\n - width (int): The output width. Also used as the width of the embedding tables. Recommended values are between 64 and 300.\n\n - attrs (list of attr IDs): The token attributes to embed. A separate embedding table will be constructed for each attribute.\n\n - rows (List[int]): The number of rows in the embedding tables. Must have the same length as attrs.\n\n - include_static_vectors (bool): Whether to also use static word vectors. Requires a vectors table to be loaded in the Doc objects' vocab.",
+        ),
+    ],
+)
+def test_hover_formatting(line, character, docstring):
+    _reset_mocks()
+    params = TextDocumentPositionParams(
+        text_document=TextDocumentIdentifier(uri=fake_document.uri),
+        position=Position(line=line, character=character),
+    )
+    hover_obj = hover_feature(server, params)
+    assert docstring in hover_obj.contents.value
