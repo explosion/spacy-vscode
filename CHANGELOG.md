@@ -10,6 +10,17 @@ We try to follow semantic versioning (semver) if possible:
 
 > Given a version number 1.2.3, 1 is the major number, 2 the minor and 3 the patch number.
 
+## [0.4.0] - 06/02/2023
+
+### Added
+- Hover feature for variables
+- Links to code for registry functions
+
+### Changed
+
+### Fixed
+- Improved formatting for hover displays
+
 ## [0.3.0] - 01/02/2023
 
 ### Added

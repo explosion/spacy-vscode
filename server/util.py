@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 @dataclass
 class SpanInfo:
-    span_string: str  # The span text
+    span_string: str  # The span text, can have markdown elements
     start: int  # Start index of the string
     end: int  # End index of the string
 
@@ -40,3 +40,47 @@ def get_current_word(line: str, start_pos: int) -> SpanInfo:
             start_i = i
 
     return SpanInfo(line[start_i : end_i + 1], start_i, end_i)
+
+
+def format_docstrings(docstring: str):
+    """
+    Formats the docstring into compatible Markdown for hover display
+    """
+
+    if docstring.split("\n\n")[-1].count(":") <= 1:
+        # if the docstring doesn't include multiple ":" in the last paragraph
+        # then it doesn't have an arguments list, just return the docstring without formatting
+        return docstring
+
+    # some docstrings have different formatting than others
+    # differentiated by the amount of spaces after a \n
+    if "\n       " in docstring:
+        # create the arguments list from the last paragraph,
+        # remove unnessesary \n and replace others with paragraph breaking \n\n and bullet points
+        registry_arguments = (
+            docstring.split("\n\n")[-1][:-2]
+            .replace("\n       ", "")
+            .replace("\n   ", "\n\n - ")
+        )
+        # reformat all other paragraphs
+        # remove unnessesary \n and replace others with paragraph breaking \n\n
+        registry_info = (
+            "\n\n".join(docstring.split("\n\n")[:-2])
+            .replace("\n   ", "")
+            .replace("\n", "\n\n")
+        )
+    else:
+        # create the arguments list from the last paragraph,
+        # remove unnessesary \n and replace others with paragraph breaking \n\n and bullet points
+        registry_arguments = (
+            docstring.split("\n\n")[-1]
+            .replace("\n   ", "")
+            .replace("\n", "\n\n - ")
+        )
+        # remove last paragraph from docstring
+        registry_info = "\n\n".join(docstring.split("\n\n")[:-1])
+
+    formatted_docstring = (
+        f"{registry_info}\n#### Arguments:\n\n - {registry_arguments}"
+    )
+    return formatted_docstring

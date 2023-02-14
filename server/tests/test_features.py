@@ -7,8 +7,10 @@ from lsprotocol.types import (
 )
 from pygls.workspace import Document, Workspace
 from thinc.api import Config
+from spacy import registry
 
 from ..server import hover_feature
+from ..util import format_docstrings
 
 
 class FakeServer:
@@ -183,7 +185,7 @@ def _reset_mocks():
 
 # Test Hover Resolve Registries
 @pytest.mark.parametrize(
-    "line, character, registry_name",
+    "line, character, registry_func",
     [
         (19, 36, "spacy.Tokenizer.v1"),
         (24, 13, "ner"),
@@ -195,14 +197,14 @@ def _reset_mocks():
         (101, 22, "compounding.v1"),
     ],
 )
-def test_resolve_registries(line, character, registry_name):
+def test_resolve_registries(line, character, registry_func):
     _reset_mocks()
     params = TextDocumentPositionParams(
         text_document=TextDocumentIdentifier(uri=fake_document.uri),
         position=Position(line=line, character=character),
     )
     hover_obj = hover_feature(server, params)
-    assert registry_name in hover_obj.contents.value
+    assert registry_func in hover_obj.contents.value
 
 
 # Test Hover Resolve Sections
@@ -222,3 +224,47 @@ def test_resolve_sections(line, character, section_name):
     )
     hover_obj = hover_feature(server, params)
     assert section_name in hover_obj.contents.value
+
+
+# Test formatting of docstrings
+@pytest.mark.parametrize(
+    "registry_func, registry_name, docstring, formatted_docstring",
+    [
+        (
+            "spacy.Tokenizer.v1",
+            "tokenizers",
+            "Registered function to create a tokenizer. Returns a factory that takes\nthe nlp object and returns a Tokenizer instance using the language detaults.",
+            "Registered function to create a tokenizer. Returns a factory that takes\nthe nlp object and returns a Tokenizer instance using the language detaults.",
+        ),
+        (
+            "ner",
+            "factories",
+            "make_ner(nlp: Language, name: str, model: Model, moves: Optional[TransitionSystem], update_with_oracle_cut_size: int, incorrect_spans_key: Optional[str], scorer: Optional[Callable])\nCreate a transition-based EntityRecognizer component. The entity recognizer\n    identifies non-overlapping labelled spans of tokens.\n\n    The transition-based algorithm used encodes certain assumptions that are\n    effective for \"traditional\" named entity recognition tasks, but may not be\n    a good fit for every span identification problem. Specifically, the loss\n    function optimizes for whole entity accuracy, so if your inter-annotator\n    agreement on boundary tokens is low, the component will likely perform poorly\n    on your problem. The transition-based algorithm also assumes that the most\n    decisive information about your entities will be close to their initial tokens.\n    If your entities are long and characterised by tokens in their middle, the\n    component will likely do poorly on your task.\n\n    model (Model): The model for the transition-based parser. The model needs\n        to have a specific substructure of named components --- see the\n        spacy.ml.tb_framework.TransitionModel for details.\n    moves (Optional[TransitionSystem]): This defines how the parse-state is created,\n        updated and evaluated. If 'moves' is None, a new instance is\n        created with `self.TransitionSystem()`. Defaults to `None`.\n    update_with_oracle_cut_size (int): During training, cut long sequences into\n        shorter segments by creating intermediate states based on the gold-standard\n        history. The model is not very sensitive to this parameter, so you usually\n        won't need to change it. 100 is a good default.\n    incorrect_spans_key (Optional[str]): Identifies spans that are known\n        to be incorrect entity annotations. The incorrect entity annotations\n        can be stored in the span group, under this key.\n    scorer (Optional[Callable]): The scoring method.\n    ",
+            "make_ner(nlp: Language, name: str, model: Model, moves: Optional[TransitionSystem], update_with_oracle_cut_size: int, incorrect_spans_key: Optional[str], scorer: Optional[Callable])\n\nCreate a transition-based EntityRecognizer component. The entity recognizer identifies non-overlapping labelled spans of tokens.\n#### Arguments:\n\n -     model (Model): The model for the transition-based parser. The model needs to have a specific substructure of named components --- see the spacy.ml.tb_framework.TransitionModel for details.\n\n -  moves (Optional[TransitionSystem]): This defines how the parse-state is created, updated and evaluated. If 'moves' is None, a new instance is created with `self.TransitionSystem()`. Defaults to `None`.\n\n -  update_with_oracle_cut_size (int): During training, cut long sequences into shorter segments by creating intermediate states based on the gold-standard history. The model is not very sensitive to this parameter, so you usually won't need to change it. 100 is a good default.\n\n -  incorrect_spans_key (Optional[str]): Identifies spans that are known to be incorrect entity annotations. The incorrect entity annotations can be stored in the span group, under this key.\n\n -  scorer (Optional[Callable]): The scoring method.\n  ",
+        ),
+        (
+            "tok2vec",
+            "factories",
+            "Currently no description available",
+            "Currently no description available",
+        ),
+        (
+            "spacy.MultiHashEmbed.v2",
+            "architectures",
+            "Construct an embedding layer that separately embeds a number of lexical\nattributes using hash embedding, concatenates the results, and passes it\nthrough a feed-forward subnetwork to build a mixed representation.\n\nThe features used can be configured with the 'attrs' argument. The suggested\nattributes are NORM, PREFIX, SUFFIX and SHAPE. This lets the model take into\naccount some subword information, without constructing a fully character-based\nrepresentation. If pretrained vectors are available, they can be included in\nthe representation as well, with the vectors table kept static\n(i.e. it's not updated).\n\nThe `width` parameter specifies the output width of the layer and the widths\nof all embedding tables. If static vectors are included, a learned linear\nlayer is used to map the vectors to the specified width before concatenating\nit with the other embedding outputs. A single Maxout layer is then used to\nreduce the concatenated vectors to the final width.\n\nThe `rows` parameter controls the number of rows used by the `HashEmbed`\ntables. The HashEmbed layer needs surprisingly few rows, due to its use of\nthe hashing trick. Generally between 2000 and 10000 rows is sufficient,\neven for very large vocabularies. A number of rows must be specified for each\ntable, so the `rows` list must be of the same length as the `attrs` parameter.\n\nwidth (int): The output width. Also used as the width of the embedding tables.\n    Recommended values are between 64 and 300.\nattrs (list of attr IDs): The token attributes to embed. A separate\n    embedding table will be constructed for each attribute.\nrows (List[int]): The number of rows in the embedding tables. Must have the\n    same length as attrs.\ninclude_static_vectors (bool): Whether to also use static word vectors.\n    Requires a vectors table to be loaded in the Doc objects' vocab.",
+            "Construct an embedding layer that separately embeds a number of lexical\nattributes using hash embedding, concatenates the results, and passes it\nthrough a feed-forward subnetwork to build a mixed representation.\n\nThe features used can be configured with the 'attrs' argument. The suggested\nattributes are NORM, PREFIX, SUFFIX and SHAPE. This lets the model take into\naccount some subword information, without constructing a fully character-based\nrepresentation. If pretrained vectors are available, they can be included in\nthe representation as well, with the vectors table kept static\n(i.e. it's not updated).\n\nThe `width` parameter specifies the output width of the layer and the widths\nof all embedding tables. If static vectors are included, a learned linear\nlayer is used to map the vectors to the specified width before concatenating\nit with the other embedding outputs. A single Maxout layer is then used to\nreduce the concatenated vectors to the final width.\n\nThe `rows` parameter controls the number of rows used by the `HashEmbed`\ntables. The HashEmbed layer needs surprisingly few rows, due to its use of\nthe hashing trick. Generally between 2000 and 10000 rows is sufficient,\neven for very large vocabularies. A number of rows must be specified for each\ntable, so the `rows` list must be of the same length as the `attrs` parameter.\n#### Arguments:\n\n - width (int): The output width. Also used as the width of the embedding tables. Recommended values are between 64 and 300.\n\n - attrs (list of attr IDs): The token attributes to embed. A separate embedding table will be constructed for each attribute.\n\n - rows (List[int]): The number of rows in the embedding tables. Must have the same length as attrs.\n\n - include_static_vectors (bool): Whether to also use static word vectors. Requires a vectors table to be loaded in the Doc objects' vocab.",
+        ),
+    ],
+)
+def test_hover_formatting(registry_func, registry_name, docstring, formatted_docstring):
+    _reset_mocks()
+
+    registry_desc = registry.find(registry_name, registry_func)
+
+    registry_docstring = (
+        registry_desc.get("docstring") or "Currently no description available"
+    )
+    assert registry_docstring == docstring
+
+    registry_formatted_docstring = format_docstrings(registry_docstring)
+    assert registry_formatted_docstring == formatted_docstring
