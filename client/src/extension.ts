@@ -1,6 +1,5 @@
 "use strict";
 
-import * as net from "net";
 import * as path from "path";
 import { ExtensionContext, ExtensionMode, workspace } from "vscode";
 import * as vscode from "vscode";
@@ -15,7 +14,11 @@ import { compare } from "compare-versions";
 import {
   spacy_version,
   pygls_version,
-  python_import,
+  python_args,
+  warnings,
+  infos,
+  errors,
+  status,
 } from "./client_constants";
 
 const fs = require("fs");
@@ -65,7 +68,6 @@ function startLangServer(
     command,
     options: { cwd },
   };
-  logging.info("Client started on: " + currentPythonEnvironment);
   return new LanguageClient(command, serverOptions, clientOptions);
 }
 
@@ -76,10 +78,10 @@ async function startProduction() {
    */
   const cwd = path.join(__dirname, "..", "..");
   // Check whether active python environment has all modules installed (pygls, spacy)
-  let pythonEnvVerified = await verifyPythonEnvironment(
+  let python_interpreter_compat = await verifyPythonEnvironment(
     currentPythonEnvironment
   );
-  if (pythonEnvVerified) {
+  if (!python_interpreter_compat.includes("E")) {
     return startLangServer(
       currentPythonEnvironment + "",
       ["-m", "server"],
@@ -92,7 +94,6 @@ async function startProduction() {
 
 async function restartClient() {
   // Restart the server
-  logging.info("Restarting Server");
   if (client) {
     await client.stop();
     setStatus(false);
@@ -107,8 +108,8 @@ async function restartClient() {
 async function showServerStatus() {
   // Return current status of the server and enable user to select new interpreter
   const options: vscode.MessageOptions = { detail: "", modal: false };
-  const option_1 = "Select interpreter";
-  const option_2 = "Select current interpreter";
+  const option_select_interpreter = "Select interpreter";
+  const option_current_interpreter = "Select current interpreter";
 
   let message: string;
   let selection: string;
@@ -116,18 +117,18 @@ async function showServerStatus() {
   let cwd = path.join(__dirname, "..", "..");
 
   if (clientActive) {
-    message = "spaCy extension active on " + currentPythonEnvironment;
+    message = status["S001"] + currentPythonEnvironment;
   } else {
-    message = "Please select a python interpreter";
+    message = status["S002"];
   }
 
   selection = await vscode.window.showInformationMessage(
     message,
     options,
-    ...[option_1, option_2]
+    ...[option_select_interpreter, option_current_interpreter]
   );
 
-  if (selection == option_1) {
+  if (selection == option_select_interpreter) {
     // Select python interpreter from file system
     let uris = await vscode.window.showOpenDialog({
       filters: {},
@@ -139,7 +140,7 @@ async function showServerStatus() {
     if (uris) {
       pythonPath = uris[0].fsPath + pythonPathSuffix;
     }
-  } else if (selection == option_2) {
+  } else if (selection == option_current_interpreter) {
     // Select current python interpreter
     pythonPath = await vscode.commands.executeCommand(
       "python.interpreterPath",
@@ -152,9 +153,7 @@ async function showServerStatus() {
     if (pythonSet) {
       restartClient();
     } else {
-      vscode.window.showWarningMessage(
-        "Python Interpreter Selected Is Not Compatible"
-      );
+      vscode.window.showWarningMessage(status["S003"]);
     }
   }
 }
@@ -167,35 +166,40 @@ async function setPythonEnvironment(pythonPath: string) {
    * @returns boolean - Whether the verification succeeded or failed
    */
   if (!fs.existsSync(pythonPath)) {
-    logging.error("Selected python interpreter does not exist: " + pythonPath);
+    logging.error(errors["E003"] + pythonPath);
     return false;
   }
-  let env_compatible = await verifyPythonEnvironment(pythonPath);
-  if (env_compatible) {
-    logging.info("Interpreter compatible: " + pythonPath);
+  let python_interpreter_compat = await verifyPythonEnvironment(pythonPath);
+  if (python_interpreter_compat.includes("E")) {
+    logging.error(errors[python_interpreter_compat]);
+    return false;
+  } else {
     currentPythonEnvironment = pythonPath;
     workspace
       .getConfiguration("spacy-extension")
       .update("pythonInterpreter", currentPythonEnvironment);
+    logging.info(infos[python_interpreter_compat] + currentPythonEnvironment);
     return true;
-  } else {
-    logging.warn("Interpreter not compatible: " + pythonPath);
-    return false;
   }
 }
 
-async function verifyPythonEnvironment(pythonPath: string): Promise<boolean> {
+async function verifyPythonEnvironment(pythonPath: string): Promise<string> {
   /**
    * Runs a child process to verify whether the selected python environment has all modules
    * @param pythonPath - Path to the python environment
    * @returns Promise<Boolean>
    */
+
   return await importPythonCommand(
-    pythonPath + " -c " + '"' + python_import + '"'
+    pythonPath +
+      " " +
+      path.join(__dirname, "..", "..") +
+      "/client/src/python_validation.py " +
+      python_args
   );
 }
 
-function importPythonCommand(cmd): Promise<boolean> {
+function importPythonCommand(cmd): Promise<string> {
   /**
    * Starts a child process and runs the python import command
    * Handles whether python modules are missing or the wrong versions are installed
@@ -204,42 +208,7 @@ function importPythonCommand(cmd): Promise<boolean> {
    */
   return new Promise((resolve, reject) => {
     exec(cmd, (error, stdout, stderr) => {
-      if (error) {
-        if (error.message.includes("ModuleNotFoundError:")) {
-          let moduleNotFound = error.message
-            .split("ModuleNotFoundError:")[1]
-            .trim();
-          logging.error(
-            "Selected python interpreter has missing modules required to run the extension: " +
-              moduleNotFound
-          );
-        } else {
-          logging.error(
-            "Error when checking python interpreter: " + error.message
-          );
-        }
-        resolve(false);
-      }
-      // Check if module versions are compatible
-      let module_versions = stdout.split(" ");
-      if (
-        compare(pygls_version, module_versions[0].trim(), ">=") &&
-        compare(spacy_version, module_versions[1].trim(), ">=")
-      ) {
-        resolve(true);
-      } else {
-        logging.error(
-          "Module versions not compatible: pygls " +
-            module_versions[0].trim() +
-            " >= " +
-            pygls_version +
-            " | spaCy " +
-            module_versions[1].trim() +
-            " >= " +
-            spacy_version
-        );
-        resolve(false);
-      }
+      resolve(stdout);
     });
   });
 }
@@ -267,9 +236,11 @@ function setStatus(b: boolean) {
    */
   clientActive = b;
   if (clientActive) {
-    statusBar.color = "white";
+    statusBar.color = new vscode.ThemeColor("badge.background");
+    logging.info(infos["I001"]);
   } else {
     statusBar.color = "red";
+    logging.info(infos["I002"]);
   }
 }
 
@@ -281,7 +252,7 @@ export async function activate(context: ExtensionContext) {
 
   // Check if Python Extension is installed
   if (!vscode.extensions.getExtension("ms-python.python")) {
-    logging.error("python extension not installed");
+    logging.error(errors["E001"]);
     return null;
   }
 
@@ -306,7 +277,7 @@ export async function activate(context: ExtensionContext) {
       .get("pythonInterpreter");
   }
 
-  setPythonEnvironment(currentPythonEnvironment);
+  await setPythonEnvironment(currentPythonEnvironment);
   client = await startProduction();
 
   if (client) {
@@ -316,7 +287,6 @@ export async function activate(context: ExtensionContext) {
 }
 
 export function deactivate(): Thenable<void> {
-  vscode.window.showInformationMessage("spaCy Extension Deactivated");
   setStatus(false);
   statusBar.hide();
   return client ? client.stop() : Promise.resolve();
