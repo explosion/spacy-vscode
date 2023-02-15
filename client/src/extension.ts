@@ -236,7 +236,7 @@ function setStatus(b: boolean) {
    */
   clientActive = b;
   if (clientActive) {
-    statusBar.color = new vscode.ThemeColor("badge.background");
+    statusBar.color = new vscode.ThemeColor("activityBar.foreground");
     logging.info(infos["I001"]);
   } else {
     statusBar.color = "red";
