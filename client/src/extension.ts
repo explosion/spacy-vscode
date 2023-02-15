@@ -9,11 +9,8 @@ import {
   ServerOptions,
 } from "vscode-languageclient/node";
 import { exec } from "child_process";
-import { compare } from "compare-versions";
 
 import {
-  spacy_version,
-  pygls_version,
   python_args,
   warnings,
   infos,

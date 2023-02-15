@@ -13,12 +13,14 @@ We try to follow semantic versioning (semver) if possible:
 ## [0.4.0] - 06/02/2023
 
 ### Added
+
 - Hover feature for variables
 - Links to code for registry functions
 
 ### Changed
 
 ### Fixed
+
 - Improved formatting for hover displays
 
 ## [0.3.0] - 01/02/2023
@@ -27,11 +29,11 @@ We try to follow semantic versioning (semver) if possible:
 
 - Hover feature for sections
 - Documentation and argument/return types for the functions in the hover feature
-- Python Environment Management
+- Improved Python Environment Management
+  - Moved checks to extra python script
   - Added checks if python modules fulfill version range
   - Added checks if `Python Extension` is enabled/installed
-- Added `compare-versions` module
-- `client_constants`
+- Added `client_constants`
 
 ### Changed
 
@@ -41,6 +43,9 @@ We try to follow semantic versioning (semver) if possible:
 - Added options to select specific interpreter or currently selected interpreter via dialog
 
 ### Fixed
+
+- Statusbar color is using color theme instead of hardcoded color
+- Added python prefix check for windows OS
 
 ## [0.2.0] - 26/01/2023
 

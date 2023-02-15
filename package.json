@@ -48,7 +48,6 @@
     "typescript": "^4.4.4"
   },
   "dependencies": {
-    "vscode-languageclient": "^8.0.2",
-    "compare-versions": "^6.0.0-rc.1"
+    "vscode-languageclient": "^8.0.2"
   }
 }
