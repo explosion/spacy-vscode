@@ -12,31 +12,24 @@ import { exec } from "child_process";
 
 import {
   python_args,
-  warnings,
+  warnings, // eslint-disable-line
   infos,
   errors,
   status,
 } from "./client_constants";
 
-const fs = require("fs");
+const fs = require("fs"); // eslint-disable-line
 
 // Server
 let client: LanguageClient;
 
-import { platform } from "node:process";
-
-let pythonPathSuffix = "/bin/python";
-if (platform == "win32") {
-  pythonPathSuffix = "/Scripts/python.exe";
-}
-
 // Status Logging
 let logging: vscode.LogOutputChannel;
 let statusBar: vscode.StatusBarItem;
-let clientActive: boolean = false;
+let clientActive = false;
 
 // Environment Compatibility
-let currentPythonEnvironment: string = "None";
+let currentPythonEnvironment = "None";
 
 const clientOptions: LanguageClientOptions = {
   // Register the server for .cfg files
@@ -75,7 +68,7 @@ async function startProduction() {
    */
   const cwd = path.join(__dirname, "..", "..");
   // Check whether active python environment has all modules installed (pygls, spacy)
-  let python_interpreter_compat = await verifyPythonEnvironment(
+  const python_interpreter_compat = await verifyPythonEnvironment(
     currentPythonEnvironment
   );
   if (!python_interpreter_compat.includes("E")) {
@@ -109,9 +102,8 @@ async function showServerStatus() {
   const option_current_interpreter = "Select current interpreter";
 
   let message: string;
-  let selection: string;
   let pythonPath: string;
-  let cwd = path.join(__dirname, "..", "..");
+  const cwd = path.join(__dirname, "..", "..");
 
   if (clientActive) {
     message = status["S001"] + currentPythonEnvironment;
@@ -119,7 +111,7 @@ async function showServerStatus() {
     message = status["S002"];
   }
 
-  selection = await vscode.window.showInformationMessage(
+  const selection = await vscode.window.showInformationMessage(
     message,
     options,
     ...[option_select_interpreter, option_current_interpreter]
@@ -127,7 +119,7 @@ async function showServerStatus() {
 
   if (selection == option_select_interpreter) {
     // Select python interpreter from file system
-    let uris = await vscode.window.showOpenDialog({
+    const uris = await vscode.window.showOpenDialog({
       filters: {},
       canSelectFiles: false,
       canSelectFolders: true,
@@ -135,7 +127,7 @@ async function showServerStatus() {
       openLabel: "Select python interpreter",
     });
     if (uris) {
-      pythonPath = uris[0].fsPath + pythonPathSuffix;
+      pythonPath = getPythonExec(uris[0].fsPath);
     }
   } else if (selection == option_current_interpreter) {
     // Select current python interpreter
@@ -146,13 +138,40 @@ async function showServerStatus() {
   }
 
   if (pythonPath) {
-    let pythonSet = await setPythonEnvironment(pythonPath);
+    const pythonSet = await setPythonEnvironment(pythonPath);
     if (pythonSet) {
       restartClient();
     } else {
       vscode.window.showWarningMessage(status["S003"]);
     }
   }
+}
+
+function getAllFiles(dir: string, _files) {
+  /** Get all files and sub-files from a directory */
+  const filter = ["bin", "Scripts", "shims"];
+  _files = _files || [];
+  const files = fs.readdirSync(dir);
+  for (const i in files) {
+    const name = dir + "/" + files[i];
+    if (fs.statSync(name).isDirectory() && filter.includes(files[i])) {
+      getAllFiles(name, _files);
+    } else {
+      _files.push(name);
+    }
+  }
+  return _files;
+}
+
+function getPythonExec(dir: string) {
+  /** Return path of python executable of a list of files */
+  const files = getAllFiles(dir, []);
+  for (const i in files) {
+    if (files[i].endsWith("python") || files[i].endsWith("python.exe")) {
+      return files[i];
+    }
+  }
+  return dir;
 }
 
 // Python Functionality
@@ -166,7 +185,7 @@ async function setPythonEnvironment(pythonPath: string) {
     logging.error(errors["E003"] + pythonPath);
     return false;
   }
-  let python_interpreter_compat = await verifyPythonEnvironment(pythonPath);
+  const python_interpreter_compat = await verifyPythonEnvironment(pythonPath);
   if (python_interpreter_compat.includes("E")) {
     logging.error(errors[python_interpreter_compat]);
     return false;
@@ -253,7 +272,7 @@ export async function activate(context: ExtensionContext) {
     return null;
   }
 
-  let _showStatus = vscode.commands.registerCommand(
+  const _showStatus = vscode.commands.registerCommand(
     "spacy-extension.showStatus",
     showServerStatus
   );
@@ -264,9 +283,10 @@ export async function activate(context: ExtensionContext) {
   // Start Client
   if (context.extensionMode === ExtensionMode.Development) {
     // Development
-    let settings = require("../../.vscode/settings.json");
-    currentPythonEnvironment =
-      settings["python.defaultInterpreterPath"] + pythonPathSuffix;
+    const settings = require("../../.vscode/settings.json"); // eslint-disable-line
+    currentPythonEnvironment = getPythonExec(
+      settings["python.defaultInterpreterPath"]
+    );
   } else {
     // Production
     currentPythonEnvironment = workspace
