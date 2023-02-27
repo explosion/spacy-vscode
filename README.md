@@ -16,11 +16,16 @@ The spaCy VSCode Extension provides additional tooling and features for working 
 
 - **Step 5.** Install spaCy Extension for Visual Studio Code
 - **Step 6.** Select your python environment
+
+<img src='./images/extension_python_env.gif' width=720>
+
 - **Step 7.** You are ready to work with `.cfg` files in spaCy!
 
 ## 🔥 Features
 
 The extension displays additional information on hover for some components and validates the config file on open.
+
+<img src='./images/extension_features.gif' width=720>
 
 ### Hover
 
