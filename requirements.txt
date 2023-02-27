@@ -1,2 +1,6 @@
 spaCy > 3.4.0
 pygls == 1.0.0
+pytest
+mypy
+black
+flake8==5.0.4
