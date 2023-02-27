@@ -22,7 +22,7 @@ def get_current_word(line: str, start_pos: int) -> SpanInfo:
 
     # Verify index lies within boundaries
     if start_pos < 0 or start_pos >= len(line):
-        return "", 0, 0
+        return SpanInfo("", 0, 0)
 
     end_i = start_pos
     start_i = start_pos
@@ -73,14 +73,10 @@ def format_docstrings(docstring: str):
         # create the arguments list from the last paragraph,
         # remove unnessesary \n and replace others with paragraph breaking \n\n and bullet points
         registry_arguments = (
-            docstring.split("\n\n")[-1]
-            .replace("\n   ", "")
-            .replace("\n", "\n\n - ")
+            docstring.split("\n\n")[-1].replace("\n   ", "").replace("\n", "\n\n - ")
         )
         # remove last paragraph from docstring
         registry_info = "\n\n".join(docstring.split("\n\n")[:-1])
 
-    formatted_docstring = (
-        f"{registry_info}\n#### Arguments:\n\n - {registry_arguments}"
-    )
+    formatted_docstring = f"{registry_info}\n#### Arguments:\n\n - {registry_arguments}"
     return formatted_docstring

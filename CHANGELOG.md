@@ -16,6 +16,7 @@ We try to follow semantic versioning (semver) if possible:
 
 - Hover feature for variables
 - Links to code for registry functions
+- Github testing
 
 ### Changed
 
