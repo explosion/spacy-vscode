@@ -1,16 +1,26 @@
 {
   "name": "spacy-extension",
-  "description": "spaCy support for .cfg files",
+  "displayName": "spaCy Extension",
+  "description": "spaCy extension that provides additional tooling and features for working with spaCy's config files",
   "author": "Explosion AI",
   "repository": "https://github.com/explosion/spacy-vscode",
   "license": "MIT",
   "version": "0.4.0",
+  "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#1e415e",
+    "theme": "dark"
+  },
   "publisher": "Explosion AI",
+  "homepage": "explosion.ai",
+  "keywords": [
+    "python", "spacy", "prodigy", "explosion", "NLP", "ML"
+  ],
   "engines": {
     "vscode": "^1.74.0"
   },
   "categories": [
-    "Other"
+    "Other", "Machine Learning"
   ],
   "extensionDependencies": [
     "ms-python.python"
