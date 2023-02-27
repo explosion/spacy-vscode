@@ -171,9 +171,9 @@ after_init = null
 fake_document = Document(fake_document_uri, fake_document_content)
 
 server = FakeServer()
-server.publish_diagnostics = Mock()
-server.show_message = Mock()
-server.show_message_log = Mock()
+server.publish_diagnostics = Mock()  # type:ignore[assignment]
+server.show_message = Mock()  # type:ignore[assignment]
+server.show_message_log = Mock()  # type:ignore[assignment]
 server.workspace.get_document = Mock(return_value=fake_document)
 
 
