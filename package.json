@@ -16,33 +16,19 @@
     "ms-python.python"
   ],
   "activationEvents": [
-    "workspaceContains:*.cfg"
+    "workspaceContains:**/*.cfg"
   ],
   "contributes": {
     "commands": [
-      {
-        "command": "spacy_test",
-        "title": "spaCy Test"
-      },
-      {
-        "command": "spacy-extension.pythonInterpreter",
-        "title": "Return Python Interpreter",
-        "category": "spaCy-Extension"
-      },
-      {
-        "command": "spacy-extension.restartServer",
-        "title": "Restart Language Server",
-        "category": "spaCy-Extension"
-      }
     ],
     "configuration": {
       "title": "spaCy Server Configuration",
       "properties": {
-        "spacy-extension.defaultPythonInterpreter": {
+        "spacy-extension.pythonInterpreter": {
           "scope": "resource",
           "type": "string",
           "default": "",
-          "description": "Specify which Python Interpreter should be used to start the spaCy Extension Server. Please make sure that the selected environment contains all required modules (pygls, spacy). If this setting is empty (by default), the spaCy Extension will use the selected Python Interpreter from your current workspace."
+          "description": "Specify python interpreter to start the spaCy extension server. Make sure it contains all required modules."
         }
       }
     }
