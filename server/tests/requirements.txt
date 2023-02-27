@@ -1,2 +1,5 @@
 pytest
 mock
+types-mock
+mypy
+black

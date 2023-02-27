@@ -16,7 +16,7 @@ from spacy import registry, schemas, glossary
 from .spacy_server import SpacyLanguageServer
 from .util import get_current_word, SpanInfo, format_docstrings
 from dataclasses import dataclass
-from catalogue import RegistryError
+from catalogue import RegistryError  # type:ignore[import]
 
 # TODO: glossary for now, to be replaced with glossary.CONFIG_DESCRIPTIONS from spacy
 CONFIG_DESCRIPTIONS = {
@@ -56,8 +56,8 @@ def hover(
         hover_object = section_resolver(
             line_str, current_span.span_string, current_span.start, current_span.end
         )
-    if hover_object is None:
-        hover_object = variable_resolver(line_str, config_dict)
+    if hover_object is None and config_dict != None:
+        hover_object = variable_resolver(line_str, config_dict)  # type:ignore[arg-type]
 
     if hover_object is not None:
         return Hover(
@@ -110,14 +110,15 @@ def registry_resolver(
 
     # get the path to the file and line number of registered function
     registry_link = ""
-    if registry_desc["file"]:
-        registry_path = registry_desc["file"]
-        line_no = registry_desc["line_no"]
+    if registry_desc["file"]:  # type:ignore[index]
+        registry_path = registry_desc["file"]  # type:ignore[index]
+        line_no = registry_desc["line_no"]  # type:ignore[index]
         registry_link = f"[Go to code]({registry_path}#L{line_no})"
 
     # find registry description or return no description
     registry_docstring = (
-        registry_desc.get("docstring") or "Currently no description available"
+        registry_desc.get("docstring")  # type:ignore[attr-defined]
+        or "Currently no description available"
     )
 
     # Fix the formatting of docstrings for display in hover
@@ -166,8 +167,8 @@ def detect_registry_func(
         registry_func_start = registry_match.span()[0]
         registry_func_end = registry_match.span()[1] - 1
         return SpanInfo(full_registry_func, registry_func_start, registry_func_end)
-    else:
-        return None
+
+    return None
 
 
 def detect_registry_name(line: str, registry_start: int) -> str:
@@ -195,6 +196,7 @@ def detect_registry_name(line: str, registry_start: int) -> str:
         else:
             type_span = get_current_word(line, i)
             return type_span.span_string
+    return ""
 
 
 def section_resolver(

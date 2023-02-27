@@ -1,6 +1,7 @@
 from pygls.server import LanguageServer
 
 from thinc.api import Config
+from typing import Optional
 
 
 class SpacyLanguageServer(LanguageServer):
@@ -14,4 +15,4 @@ class SpacyLanguageServer(LanguageServer):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.config: Config = None
+        self.config: Optional[Config] = None
