@@ -1,9 +1,9 @@
 from lsprotocol.types import (
-    TEXT_DOCUMENT_DID_CLOSE,
     TEXT_DOCUMENT_DID_OPEN,
+    TEXT_DOCUMENT_DID_SAVE,
     TEXT_DOCUMENT_HOVER,
-    DidCloseTextDocumentParams,
     DidOpenTextDocumentParams,
+    DidSaveTextDocumentParams,
     Hover,
     TextDocumentPositionParams,
 )
@@ -11,7 +11,7 @@ from lsprotocol.types import (
 from typing import Optional
 import spacy
 from .feature_hover import hover
-from .feature_validation import validate_on_open
+from .feature_validation import validate_config
 from .spacy_server import SpacyLanguageServer
 
 
@@ -26,27 +26,13 @@ def hover_feature(
     return hover(server, params)
 
 
-@spacy_server.feature(TEXT_DOCUMENT_DID_CLOSE)
-def did_close(server: SpacyLanguageServer, params: DidCloseTextDocumentParams):
-    """Text document did close notification."""
-    server.show_message("Config File Did Close")
-
-
 @spacy_server.feature(TEXT_DOCUMENT_DID_OPEN)
 async def did_open(server: SpacyLanguageServer, params: DidOpenTextDocumentParams):
     """Text document did open notification."""
-    config = validate_on_open(params=params)
-    if config:
-        server.show_message("Config File Validation Successful")
-        spacy_server.config = config
-    else:
-        server.show_message("Config File Validation Unsuccessful")
-        spacy_server.config = None
+    spacy_server.config = validate_config(server=server, cfg=params.text_document.text)
 
 
-# Temporary for testing
-@spacy_server.command(spacy_server.SPACY_TEST)
-def spaCy_test(ls, *args):
-    nlp = spacy.blank("en")
-    doc = nlp("This is great!")
-    ls.show_message(f"spaCy loaded! {doc.text}")
+@spacy_server.feature(TEXT_DOCUMENT_DID_SAVE)
+async def did_save(server: SpacyLanguageServer, params: DidSaveTextDocumentParams):
+    """Text document did save notification."""
+    spacy_server.config = validate_config(server=server, cfg=params.text)

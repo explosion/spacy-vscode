@@ -11,8 +11,6 @@ class SpacyLanguageServer(LanguageServer):
     DOCS: https://pygls.readthedocs.io/en/latest/pages/advanced_usage.html#language-server
     """
 
-    SPACY_TEST = "spacy_test"
-
     def __init__(self, *args):
         super().__init__(*args)
         self.config: Optional[Config] = None
