@@ -161,7 +161,7 @@ function getAllFiles(dir: string, _files) {
     const name = dir + "/" + files[i];
     if (fs.statSync(name).isDirectory() && filter.includes(files[i])) {
       getAllFiles(name, _files);
-    } else {
+    } else if (files[i].includes("python")) {
       _files.push(name);
     }
   }

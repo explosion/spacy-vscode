@@ -10,6 +10,7 @@ from thinc.api import Config
 from spacy import registry
 
 from ..server import hover_feature
+from ..feature_validation import validate_config
 from ..util import format_docstrings
 
 
@@ -168,7 +169,150 @@ after_init = null
 
 [initialize.tokenizer]
 """
+
 fake_document = Document(fake_document_uri, fake_document_content)
+
+fake_document_content_non_valid = """
+[paths]
+train = null
+dev = null
+vectors = null
+init_tok2vec = null
+
+[system]
+gpu_allocator = null
+seed = 0
+
+[nlp]
+lang = "id"
+pipeline = ["tok2vec","ner"]
+batch_size = 1000
+disabled = []
+before_creation = null
+after_creation = null
+after_pipeline_creation = null
+tokenizer = {"@tokenizers":"spacy.Tokenizer.v1"}
+
+[components]
+
+[components.ner]
+factory = "ner"
+moves = null
+update_with_oracle_cut_size = 100
+
+[components.ner.model]
+@architectures = "spacy.TransitionBasedParser.v2"
+state_typtokens = false
+hidden_width = 64
+maxout_pieces = 2
+use_upper = true
+nO = null
+
+[components.ner.model.tok2vec]
+@architectures = "spacy.Tok2VecListener.v1"
+width = ${components.tok2vec.model.encode.width}
+upstream = "*"
+
+[components.tok2vec]
+factory = "tok2vec"
+
+[components.tok2vec.model]
+@architectures = "spacy.Tok2Vec.v2"
+
+[components.tok2vec.model.embed]
+@architectures = "spacy.MultiHashEmbed.v2"
+width = ${components.tok2vec.model.encode.width}
+attrs = ["NORM","PREFIX","SUFFIX","SHAPE"]
+rows = [5000,2500,2500,2500]
+include_static_vectors = false
+
+[components.tok2vec.model.encode]
+@architectures = "spacy.MaxoutWindowEncoder.v2"
+width = 96
+depth = 4
+window_size = 1
+maxout_pieces = 3
+
+[corpora]
+
+[corpora.dev]
+@readers = "spacy.Corpus.v1"
+path = ${paths.dev}
+max_length = 0
+gold_preproc = false
+limit = 0
+augmenter = null
+
+[corpora.train]
+@readers = "spacy.Corpus.v1"
+path = ${paths.train}
+max_length = 2000
+gold_preproc = false
+limit = 0
+augmenter = null
+
+[tra]
+dev_corpus = "corpora.dev"
+train_corpus = "corpora.train"
+seed = ${system.seed}
+gpu_allocator = ${system.gpu_allocator}
+dropout = 0.1
+accumulate_gradient = 1
+patience = 1600
+max_epochs = 0
+max_steps = 20000
+eval_frequency = 200
+frozen_components = []
+before_to_disk = null
+
+[training.batcher]
+@batchers = "spacy.batch_by_words.v1"
+discard_oversize = false
+tolerance = 0.2
+get_length = null
+
+[training.batch
+@schedules = "compounding.v1"
+start = 100
+stop = 1000
+compound = 1.001
+t = 0.0
+
+[training.logger]
+@loggers = "spacy.ConsoleLogger.v1"
+progress_
+
+[training.optimizer]
+@optimizers = "Adam.v1"
+beta1 = 0.9
+beta2 = 0.999
+L2_is_weight_decay = true
+L2 = 0.01
+grad_clip = 1.0
+use_averages = false
+eps = 0.00000001
+learn_rate = 0.001
+
+[training.score_weights]
+ents_per_type = null
+ents  1.0
+ents_p = 0.0
+ents_r = 0.0
+
+[pretraining]
+
+[initialize]
+vectors = n
+init_tok2vec = ${paths.init_tok2vec}
+vocab_data = null
+lookups = null
+before_init = null
+after_init = null
+
+[initialize.compo
+
+[initialize.tokenizer]
+"""
 
 server = FakeServer()
 server.publish_diagnostics = Mock()  # type:ignore[assignment]
@@ -268,3 +412,18 @@ def test_hover_formatting(registry_func, registry_name, docstring, formatted_doc
 
     registry_formatted_docstring = format_docstrings(registry_docstring)
     assert registry_formatted_docstring == formatted_docstring
+
+
+# Test validation of configs
+@pytest.mark.parametrize(
+    "cfg, valid",
+    [(fake_document_content, True), (fake_document_content_non_valid, False)],
+)
+def test_validation(cfg, valid):
+    _reset_mocks()
+    config = validate_config(server, cfg)
+    if config:
+        _valid = True
+    else:
+        _valid = False
+    assert _valid == valid

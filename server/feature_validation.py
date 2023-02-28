@@ -11,10 +11,9 @@ def validate_config(
 ) -> Optional[Config]:
     """Validate .cfg files and return their Config object"""
     try:
-        server.show_message_log("MEOW")
         config = Config().from_str(cfg)  # type: ignore[arg-type]
-        server.show_message("Config File Validation Successful")
+        server.show_message_log("Validation Successful")
         return config
     except Exception as e:
-        server.show_message("Config File Validation Unsuccessful")
+        server.show_message_log("Validation Unsuccessful")
         return None
