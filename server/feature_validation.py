@@ -16,4 +16,5 @@ def validate_config(
         return config
     except Exception as e:
         server.show_message_log("Validation Unsuccessful")
+        server.show_message("Warning: Config not valid")
         return None
