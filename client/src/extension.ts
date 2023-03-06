@@ -24,8 +24,7 @@ const fs = require("fs"); // eslint-disable-line
 let client: LanguageClient;
 
 // Status Logging
-let logging: vscode.LogOutputChannel;
-logging = vscode.window.createOutputChannel("spaCy Extension Log", {
+const logging = vscode.window.createOutputChannel("spaCy Extension Log", {
   log: true,
 });
 logging.show();
