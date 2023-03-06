@@ -24,7 +24,11 @@ const fs = require("fs"); // eslint-disable-line
 let client: LanguageClient;
 
 // Status Logging
-let logging: vscode.LogOutputChannel;
+const logging = vscode.window.createOutputChannel("spaCy Extension Log", {
+  log: true,
+});
+logging.show();
+
 let statusBar: vscode.StatusBarItem;
 let clientActive = false;
 
@@ -37,7 +41,7 @@ const clientOptions: LanguageClientOptions = {
     { scheme: "file", pattern: "**/*.cfg" },
     { scheme: "untitled", pattern: "**/*.cfg" },
   ],
-  outputChannelName: "[pygls] spaCy-Language-Server",
+  outputChannel: logging,
   synchronize: {
     // Notify the server about file changes to '.clientrc files contain in the workspace
     fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
@@ -156,7 +160,7 @@ function getAllFiles(dir: string, _files) {
     const name = dir + "/" + files[i];
     if (fs.statSync(name).isDirectory() && filter.includes(files[i])) {
       getAllFiles(name, _files);
-    } else {
+    } else if (files[i].includes("python")) {
       _files.push(name);
     }
   }
@@ -261,11 +265,6 @@ function setStatus(b: boolean) {
 }
 
 export async function activate(context: ExtensionContext) {
-  logging = vscode.window.createOutputChannel("spaCy Extension Log", {
-    log: true,
-  });
-  logging.show();
-
   // Check if Python Extension is installed
   if (!vscode.extensions.getExtension("ms-python.python")) {
     logging.error(errors["E001"]);

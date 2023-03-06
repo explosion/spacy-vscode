@@ -3,12 +3,18 @@ from lsprotocol.types import DidOpenTextDocumentParams
 
 from thinc.api import Config
 from typing import Optional
+from .spacy_server import SpacyLanguageServer
 
 
-def validate_on_open(params: DidOpenTextDocumentParams) -> Optional[Config]:
+def validate_config(
+    server: SpacyLanguageServer, cfg: Optional[str]
+) -> Optional[Config]:
     """Validate .cfg files and return their Config object"""
     try:
-        return Config().from_str(params.text_document.text)
+        config = Config().from_str(cfg)  # type: ignore[arg-type]
+        server.show_message_log("Validation Successful")
+        return config
     except Exception as e:
-        # TODO Exception handling
+        server.show_message_log("Validation Unsuccessful")
+        server.show_message("Warning: Config not valid ")
         return None

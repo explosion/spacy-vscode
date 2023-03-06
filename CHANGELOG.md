@@ -10,6 +10,22 @@ We try to follow semantic versioning (semver) if possible:
 
 > Given a version number 1.2.3, 1 is the major number, 2 the minor and 3 the patch number.
 
+## [0.5.0] - 28/02/2023
+
+### Added
+
+- Add config validation functionality
+- Add more info to developer docs
+
+### Changed
+
+- Improved python interpreter search
+- Improved logging
+
+### Fixed
+
+- mypy and linting issues
+
 ## [0.4.0] - 06/02/2023
 
 ### Added
