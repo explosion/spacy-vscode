@@ -1,5 +1,5 @@
-pytest
+pytest==7.2.1
 mock
 types-mock
-mypy
-black
+mypy==1.0.1
+black==23.3.0
