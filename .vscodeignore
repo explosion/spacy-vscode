@@ -1,5 +1,6 @@
 .vscode
 .gitignore
+.github
 client/out/*.map
 client/src/
 tsconfig.json
@@ -7,6 +8,8 @@ tslint.json
 package.json
 package-lock.json
 working_env
+images
 .pytest_cache
+.mypy_cache
 *.vsix
 *.log
