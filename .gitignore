@@ -8,4 +8,5 @@ working_env
 *.log
 __pycache__
 .pytest_cache
+.mypy_cache
 test.py
