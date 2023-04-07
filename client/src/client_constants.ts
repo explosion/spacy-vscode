@@ -16,6 +16,7 @@ export const errors = {
   E009:
     "[E009] Version of spaCy not compatible. Please make sure your spaCy version is >=" +
     spacy_version,
+  E010: "[E010] Python Interpreter not compatible",
 };
 
 export const warnings = {
