@@ -122,8 +122,7 @@ def registry_resolver(
     )
 
     # Fix the formatting of docstrings for display in hover
-    formatted_docstring = format_docstrings(registry_docstring)
-
+    formatted_docstring = format_docstrings(registry_docstring)  # type:ignore[arg-type]
     hover_display = (
         f"### (*registry*) {registry_func}\n\n{registry_link}\n\n{formatted_docstring}"
     )
@@ -241,7 +240,9 @@ def section_resolver(
     elif current_word == sub_section and main_section in config_schemas.keys():
         # get field title from the config schema
         field_title = (
-            config_schemas[main_section].__fields__[sub_section].field_info.title
+            config_schemas[main_section]
+            .__fields__[sub_section]  # type:ignore[attr-defined]
+            .field_info.title
         )
         hover_display = (
             f"(*section*) {main_section} -> **{sub_section}**: {field_title}"
