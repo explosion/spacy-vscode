@@ -18,7 +18,7 @@ import {
   status,
 } from "./client_constants";
 
-const fs = require("fs"); // eslint-disable-line
+import * as fs from "fs"; // eslint-disable-line
 
 // Server
 let client: LanguageClient;
@@ -75,7 +75,7 @@ async function startProduction() {
   const python_interpreter_compat = await verifyPythonEnvironment(
     currentPythonEnvironment
   );
-  if (!python_interpreter_compat.includes("E")) {
+  if (python_interpreter_compat.includes("I")) {
     return startLangServer(
       currentPythonEnvironment + "",
       ["-m", "server"],
@@ -90,12 +90,12 @@ async function restartClient() {
   // Restart the server
   if (client) {
     await client.stop();
-    setStatus(false);
+    setClientActiveStatus(false);
   }
   client = await startProduction();
   if (client) {
     await client.start();
-    setStatus(true);
+    setClientActiveStatus(true);
   }
 }
 
@@ -123,6 +123,7 @@ async function showServerStatus() {
 
   if (selection == option_select_interpreter) {
     // Select python interpreter from file system
+    logging.info("Selecting from Python Interpreter from Directory");
     const uris = await vscode.window.showOpenDialog({
       filters: {},
       canSelectFiles: false,
@@ -135,6 +136,7 @@ async function showServerStatus() {
     }
   } else if (selection == option_current_interpreter) {
     // Select current python interpreter
+    logging.info("Selecting current Python Interpreter");
     pythonPath = await vscode.commands.executeCommand(
       "python.interpreterPath",
       { workspaceFolder: cwd }
@@ -142,16 +144,19 @@ async function showServerStatus() {
   }
 
   if (pythonPath) {
+    logging.info("Python Path retrieved: " + pythonPath);
     const pythonSet = await setPythonEnvironment(pythonPath);
     if (pythonSet) {
       restartClient();
     } else {
       vscode.window.showWarningMessage(status["S003"]);
     }
+  } else {
+    logging.info("Python Path could not be retrieved");
   }
 }
 
-function getAllFiles(dir: string, _files) {
+function getAllFiles(dir: string, _files: string[] = []): string[] {
   /** Get all files and sub-files from a directory */
   const filter = ["bin", "Scripts", "shims"];
   _files = _files || [];
@@ -167,7 +172,7 @@ function getAllFiles(dir: string, _files) {
   return _files;
 }
 
-function getPythonExec(dir: string) {
+function getPythonExec(dir: string): string {
   /** Return path of python executable of a list of files */
   const files = getAllFiles(dir, []);
   for (const i in files) {
@@ -193,13 +198,16 @@ async function setPythonEnvironment(pythonPath: string) {
   if (python_interpreter_compat.includes("E")) {
     logging.error(errors[python_interpreter_compat]);
     return false;
-  } else {
+  } else if (python_interpreter_compat.includes("I")) {
     currentPythonEnvironment = pythonPath;
     workspace
       .getConfiguration("spacy-extension")
       .update("pythonInterpreter", currentPythonEnvironment);
     logging.info(infos[python_interpreter_compat] + currentPythonEnvironment);
     return true;
+  } else {
+    logging.error(errors["E010"]);
+    return false;
   }
 }
 
@@ -212,9 +220,13 @@ async function verifyPythonEnvironment(pythonPath: string): Promise<string> {
 
   return await importPythonCommand(
     pythonPath +
-      " " +
-      path.join(__dirname, "..", "..") +
-      "/client/src/python_validation.py " +
+      ` ${path.join(
+        __dirname,
+        "..",
+        "..",
+        "client",
+        "python_validation.py"
+      )} ` +
       python_args
   );
 }
@@ -249,7 +261,7 @@ function setupStatusBar() {
   return statusBar;
 }
 
-function setStatus(b: boolean) {
+function setClientActiveStatus(b: boolean) {
   /**
    * Set the status bar color depending whether the client is active or not
    * @params b: boolean - Is Client Active?
@@ -298,12 +310,12 @@ export async function activate(context: ExtensionContext) {
 
   if (client) {
     await client.start();
-    setStatus(true);
+    setClientActiveStatus(true);
   }
 }
 
 export function deactivate(): Thenable<void> {
-  setStatus(false);
+  setClientActiveStatus(false);
   statusBar.hide();
   return client ? client.stop() : Promise.resolve();
 }

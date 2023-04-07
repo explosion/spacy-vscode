@@ -1,5 +1,5 @@
 import sys
-from packaging import version
+from distutils.version import LooseVersion
 import argparse
 
 parser = argparse.ArgumentParser(description="Script to validate python interpreter")
@@ -10,18 +10,23 @@ args = parser.parse_args()
 try:
     import pygls
 
-    if version.parse(pygls.__version__) >= version.parse(args.pygls_version):
+    if LooseVersion(pygls.__version__) >= LooseVersion(args.pygls_version):
         try:
             import spacy
 
-            if version.parse(spacy.__version__) >= version.parse(args.spacy_version):
+            if LooseVersion(spacy.__version__) >= LooseVersion(args.spacy_version):
                 sys.stdout.write("I003")
+                sys.exit()
             else:
                 sys.stdout.write("E009")
+                sys.exit()
         except ModuleNotFoundError as e:
             sys.stdout.write("E007")
+            sys.exit()
     else:
         sys.stdout.write("E008")
+        sys.exit()
 
 except ModuleNotFoundError as e:
     sys.stdout.write("E006")
+    sys.exit()
