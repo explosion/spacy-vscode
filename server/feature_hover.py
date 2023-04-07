@@ -122,8 +122,7 @@ def registry_resolver(
     )
 
     # Fix the formatting of docstrings for display in hover
-    formatted_docstring = format_docstrings(registry_docstring)
-
+    formatted_docstring = format_docstrings(registry_docstring)  # type:ignore[arg-type]
     hover_display = (
         f"### (*registry*) {registry_func}\n\n{registry_link}\n\n{formatted_docstring}"
     )
