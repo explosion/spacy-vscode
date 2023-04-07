@@ -5,7 +5,7 @@
   "author": "Explosion AI",
   "repository": "https://github.com/explosion/spacy-vscode",
   "license": "MIT",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "icon": "icon.png",
   "galleryBanner": {
     "color": "#1e415e",
@@ -14,13 +14,19 @@
   "publisher": "Explosion AI",
   "homepage": "explosion.ai",
   "keywords": [
-    "python", "spacy", "prodigy", "explosion", "NLP", "ML"
+    "python",
+    "spacy",
+    "prodigy",
+    "explosion",
+    "NLP",
+    "ML"
   ],
   "engines": {
     "vscode": "^1.74.0"
   },
   "categories": [
-    "Other", "Machine Learning"
+    "Other",
+    "Machine Learning"
   ],
   "extensionDependencies": [
     "ms-python.python"
@@ -29,8 +35,7 @@
     "workspaceContains:**/*.cfg"
   ],
   "contributes": {
-    "commands": [
-    ],
+    "commands": [],
     "configuration": {
       "title": "spaCy Server Configuration",
       "properties": {
