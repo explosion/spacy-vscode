@@ -23,6 +23,13 @@ def hover_feature(
     server: SpacyLanguageServer, params: TextDocumentPositionParams
 ) -> Optional[Hover]:
     """Implement Hover functionality"""
+
+    if spacy_server.doc_uri != params.text_document.uri:
+        document = server.workspace.get_document(params.text_document.uri)
+        spacy_server.config = validate_config(server=server, cfg=document.source)
+        if spacy_server.config:
+            spacy_server.doc_uri = params.text_document.uri
+
     return hover(server, params)
 
 
@@ -31,6 +38,7 @@ async def did_open(server: SpacyLanguageServer, params: DidOpenTextDocumentParam
     """Text document did open notification."""
     spacy_server.config = validate_config(server=server, cfg=params.text_document.text)
     if spacy_server.config:
+        spacy_server.doc_uri = params.text_document.uri
         server.show_message("spaCy Extension Active")
 
 
@@ -39,3 +47,5 @@ async def did_save(server: SpacyLanguageServer, params: DidSaveTextDocumentParam
     """Text document did save notification."""
     document = server.workspace.get_document(params.text_document.uri)
     spacy_server.config = validate_config(server=server, cfg=document.source)
+    if spacy_server.config:
+        spacy_server.doc_uri = params.text_document.uri

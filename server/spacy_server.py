@@ -14,3 +14,4 @@ class SpacyLanguageServer(LanguageServer):
     def __init__(self, *args):
         super().__init__(*args)
         self.config: Optional[Config] = None
+        self.doc_uri: str = None
