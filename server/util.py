@@ -46,37 +46,67 @@ def format_docstrings(docstring: str):
     """
     Formats the docstring into compatible Markdown for hover display
     """
+    docstring_split = docstring.split("\n\n")
 
-    if docstring.split("\n\n")[-1].count(":") <= 1:
-        # if the docstring doesn't include multiple ":" in the last paragraph
-        # then it doesn't have an arguments list, just return the docstring without formatting
+    has_func = False
+    has_args = False
+    has_format = False
+
+    # test docstring for formatting features
+    if docstring_split[0].count("make_") == 1:
+        has_func = True
+    if docstring_split[-1].count(":") > 1 and docstring_split[-1].count("make_") != 1:
+        has_args = True
+    if "\n       " in docstring:
+        has_format = True
+
+    # if no re-formatting features, return the docstring as is
+    if (has_func, has_args, has_format) == (False, False, False):
         return docstring
 
-    # some docstrings have different formatting than others
-    # differentiated by the amount of spaces after a \n
-    if "\n       " in docstring:
+    # if the string has a make function and not argument descriptions,
+    # just return the arguments and other additional info if present
+    if has_func:
+        if not has_args:
+            registry_arguments = docstring_split[0]
+            registry_arguments = "\n\n - ".join(
+                registry_arguments.split("(")[1][:-1].split(",")
+            )
+            # remove first paragraph from docstring
+            registry_info = "\n\n".join(docstring_split[1:]) or ""
+        # remove the make function
+        docstring_split = docstring_split[1:]
+
+    # if docstring has formatting issues and has an argument list
+    if has_format and has_args:
         # create the arguments list from the last paragraph,
         # remove unnessesary \n and replace others with paragraph breaking \n\n and bullet points
         registry_arguments = (
-            docstring.split("\n\n")[-1][:-2]
+            docstring_split[-1][:-2]
             .replace("\n       ", "")
             .replace("\n   ", "\n\n - ")
         )
         # reformat all other paragraphs
         # remove unnessesary \n and replace others with paragraph breaking \n\n
         registry_info = (
-            "\n\n".join(docstring.split("\n\n")[:-2])
-            .replace("\n   ", "")
-            .replace("\n", "\n\n")
+            "\n\n".join(docstring_split[:-1]).replace("\n   ", "").replace("\n", "\n\n")
         )
-    else:
+    elif has_args:
         # create the arguments list from the last paragraph,
         # remove unnessesary \n and replace others with paragraph breaking \n\n and bullet points
         registry_arguments = (
-            docstring.split("\n\n")[-1].replace("\n   ", "").replace("\n", "\n\n - ")
+            docstring_split[-1].replace("\n   ", "").replace("\n", "\n\n - ")
         )
-        # remove last paragraph from docstring
-        registry_info = "\n\n".join(docstring.split("\n\n")[:-1])
+        # remove last paragraph from info
+        registry_info = "\n\n".join(docstring_split[:-1])
 
-    formatted_docstring = f"{registry_info}\n#### Arguments:\n\n - {registry_arguments}"
-    return formatted_docstring
+    if registry_arguments:
+        formatted_docstring = (
+            f"{registry_info}\n#### Arguments:\n\n - {registry_arguments}"
+        )
+        return formatted_docstring
+    else:
+        # if make function name is present with no arguments, return no description
+        if has_func:
+            return "Currently no description available"
+        return docstring
