@@ -381,6 +381,12 @@ def test_resolve_sections(line, character, section_name):
             "Registered function to create a tokenizer. Returns a factory that takes\nthe nlp object and returns a Tokenizer instance using the language detaults.",
         ),
         (
+            "morphologizer",
+            "factories",
+            "make_morphologizer(nlp: Language, model: Model, name: str, overwrite: bool, extend: bool, scorer: Optional[Callable])",
+            "\n#### Arguments:\n\n - nlp: Language\n\n -  model: Model\n\n -  name: str\n\n -  overwrite: bool\n\n -  extend: bool\n\n -  scorer: Optional[Callable]",
+        ),
+        (
             "tok2vec",
             "factories",
             "Currently no description available",
