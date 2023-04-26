@@ -74,10 +74,10 @@ def format_docstrings(docstring: str):
             )
             # remove first paragraph from docstring
             registry_info = "\n\n".join(docstring_split[1:]) or ""
-        # remove the make function
+        # remove the make function if it has arguments
         docstring_split = docstring_split[1:]
 
-    # if docstring has formatting issues and has an argument list
+    # if docstring has formatting issues (has_format = True) and has an argument list
     if has_format and has_args:
         # create the arguments list from the last paragraph,
         # remove unnessesary \n and replace others with paragraph breaking \n\n and bullet points
