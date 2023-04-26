@@ -61,7 +61,7 @@ def format_docstrings(docstring: str):
         has_format = True
 
     # if no re-formatting features, return the docstring as is
-    if (has_func, has_args, has_format) == (False, False, False):
+    if not has_func and not has_args and not has_format:
         return docstring
 
     # if the string has a make function and not argument descriptions,
@@ -105,8 +105,8 @@ def format_docstrings(docstring: str):
             f"{registry_info}\n#### Arguments:\n\n - {registry_arguments}"
         )
         return formatted_docstring
-    else:
+    elif has_func:
         # if make function name is present with no arguments, return no description
-        if has_func:
-            return "Currently no description available"
+        return "Currently no description available"
+    else:
         return docstring
