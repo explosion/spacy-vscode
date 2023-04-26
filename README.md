@@ -44,4 +44,4 @@ The hover feature provides three different types of information.
 
 ## ℹ️ Support
 
-If you have questions about the extension, please ask on the spaCy discussion forum.
+If you have questions about the extension, please ask on the [spaCy discussion forum](https://github.com/explosion/spaCy/discussions).
