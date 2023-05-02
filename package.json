@@ -5,7 +5,7 @@
   "author": "Explosion",
   "repository": "https://github.com/explosion/spacy-vscode",
   "license": "MIT",
-  "version": "0.6.0",
+  "version": "1.0.0",
   "icon": "icon.png",
   "galleryBanner": {
     "color": "#1e415e",
