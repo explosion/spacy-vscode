@@ -1,6 +1,6 @@
 # spaCy VSCode Extension
 
-Version 0.6.0
+Version 1.0.0
 
 The spaCy VSCode Extension provides additional tooling and features for working with spaCy's config files. Version 1.0.0 includes hover descriptions for registry functions, variables, and section names within the config as an installable extension.
 
@@ -9,8 +9,8 @@ The spaCy VSCode Extension provides additional tooling and features for working 
 ## 🚀 Quickstart
 
 - **Step 1.** Install a supported version of Python on your system (`>=3.7`)
-- **Step 2.** Install the [Python Extension for Visual Studio Code]()
-- **Step 3.** Create a [virtual python environment]()
+- **Step 2.** Install the [Python Extension for Visual Studio Code](https://code.visualstudio.com/docs/python/python-tutorial)
+- **Step 3.** Create a [virtual python environment](https://docs.python.org/3/library/venv.html)
 - **Step 4.** Install all python requirements
 
   - `spaCy >= 3.4.0`
