@@ -16,7 +16,7 @@ The spaCy VSCode Extension provides additional tooling and features for working 
   - `spaCy >= 3.4.0`
   - `pygls >= 1.0.0`
 
-- **Step 5.** Install spaCy Extension for Visual Studio Code
+- **Step 5.** Install [spaCy Extension for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=Explosion.spacy-extension)
 - **Step 6.** Select your python environment
 
 <img src='./images/extension_python_env.gif' width=720>
