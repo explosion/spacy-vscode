@@ -1,6 +1,6 @@
 {
   "name": "spacy-extension",
-  "displayName": "spaCy Extension",
+  "displayName": "spaCy",
   "description": "spaCy extension that provides additional tooling and features for working with spaCy's config files",
   "author": "Explosion",
   "repository": "https://github.com/explosion/spacy-vscode",
