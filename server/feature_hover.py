@@ -113,7 +113,7 @@ def registry_resolver(
     if registry_desc["file"]:  # type:ignore[index]
         registry_path = registry_desc["file"]  # type:ignore[index]
         line_no = registry_desc["line_no"]  # type:ignore[index]
-        registry_link = f"[Go to code]({registry_path}#L{line_no})"
+        registry_link = f"[Go to code](file://{registry_path}#L{line_no})"
 
     # find registry description or return no description
     registry_docstring = (
