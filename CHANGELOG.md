@@ -10,6 +10,12 @@ We try to follow semantic versioning (semver) if possible:
 
 > Given a version number 1.2.3, 1 is the major number, 2 the minor and 3 the patch number.
 
+## [1.0.1] - 02/06/2023
+
+### Fixed
+
+- File bug in windows
+
 ## [1.0.0] - 02/05/2023
 
 ### Fixed

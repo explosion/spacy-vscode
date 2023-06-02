@@ -1,6 +1,6 @@
 # spaCy VSCode Extension
 
-Version 1.0.0
+Version 1.0.1
 
 The spaCy VSCode Extension provides additional tooling and features for working with spaCy's config files. Version 1.0.0 includes hover descriptions for registry functions, variables, and section names within the config as an installable extension.
 
