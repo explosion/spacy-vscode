@@ -15,7 +15,7 @@ args = parser.parse_args()
 
 try:
     pygls_version = metadata.version("pygls")
-    if LooseVersion(pygls.__version__) >= LooseVersion(args.pygls_version):
+    if LooseVersion(pygls_version) >= LooseVersion(args.pygls_version):
         spacy_version = metadata.version("spacy")
         try:
             if LooseVersion(spacy_version) >= LooseVersion(args.spacy_version):
