@@ -28,13 +28,13 @@ def get_current_word(line: str, start_pos: int) -> SpanInfo:
     start_i = start_pos
 
     for i in range(start_pos, len(line), 1):
-        if re.match("\W", line[i]):
+        if re.match(r"\W", line[i]):
             break
         else:
             end_i = i
 
     for i in range(start_pos, -1, -1):
-        if re.match("\W", line[i]):
+        if re.match(r"\W", line[i]):
             break
         else:
             start_i = i
