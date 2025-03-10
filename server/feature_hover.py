@@ -190,7 +190,7 @@ def detect_registry_name(line: str, registry_start: int) -> str:
         return ""
 
     for i in range(registry_start - 1, 0, -1):
-        if re.match("\W", line[i]):
+        if re.match(r"\W", line[i]):
             continue
         else:
             type_span = get_current_word(line, i)
